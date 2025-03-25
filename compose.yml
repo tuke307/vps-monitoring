@@ -2,7 +2,7 @@ services:
   loki:
     image: grafana/loki:latest
     volumes:
-      - ./config/loki:/etc/loki
+      - '/etc/loki:/etc/loki'
       - loki-data:/loki
     ports:
       - "3100:3100"
@@ -10,6 +10,13 @@ services:
     command: -config.file=/etc/loki/loki-config.yml
     networks:
       - loki
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'wget --tries=1 --spider http://localhost:3100/ready || exit 1'
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   promtail:
     image: grafana/promtail:latest
@@ -55,11 +62,12 @@ services:
     depends_on:
       - loki
       - prometheus
-    image: grafana/grafana:latest
+    image: grafana/grafana-oss:latest
     restart: unless-stopped
     ports:
       - "3200:3000"
     environment:
+      - SERVICE_FQDN_GRAFANA_3000
       - GF_SECURITY_ADMIN_USER=${SERVICE_USER_GRAFANA}
       - GF_SECURITY_ADMIN_PASSWORD=${SERVICE_PASSWORD_GRAFANA}
       - GF_SERVER_ROOT_URL=${SERVICE_FQDN_GRAFANA}
@@ -73,7 +81,23 @@ services:
         - CMD
         - curl
         - '-f'
-        - 'http://127.0.0.1:3200/api/health'
+        - 'http://127.0.0.1:3000/api/health'
+      interval: 5s
+      timeout: 20s
+      retries: 10
+
+  postgresql:
+    image: postgres:16-alpine
+    volumes:
+      - 'postgresql-data:/var/lib/postgresql/data'
+    environment:
+      - POSTGRES_USER=$SERVICE_USER_POSTGRES
+      - POSTGRES_PASSWORD=$SERVICE_PASSWORD_POSTGRES
+      - 'POSTGRES_DB=${POSTGRES_DB:-grafana}'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}'
       interval: 5s
       timeout: 20s
       retries: 10

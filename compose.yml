@@ -1,72 +1,65 @@
 services:
   loki:
-    image: grafana/loki:master
-    command: -config.file=/etc/loki/local-config.yaml
+    image: grafana/loki:latest
+    volumes:
+      - ./config/loki:/etc/loki
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
     networks:
-      - grafana-loki
-      - promtail-loki
+      - loki
 
   promtail:
-    depends_on:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/log:/var/log # map the log folder.
+      - ./config/promtail:/etc/promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    networks:
       - loki
-    image: grafana/promtail:master
-    volumes:
-      - /var/log:/var/log
-    command: -config.file=/etc/promtail/docker-config.yaml
-    networks:
-      - promtail-loki
 
-  cadvisor:
-    image: google/cadvisor:v0.33.0
+  node-exporter:
+    image: prom/node-exporter:latest
+    network_mode: host # Not compatible with ports declaration. This service will expose port 9100.
     volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
       - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    networks:
-      - prometheus-cadvisor
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"
+      - "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)"
+    restart: unless-stopped
 
   prometheus:
-    image: prom/prometheus:v2.7.1
+    image: prom/prometheus:latest
+    volumes:
+      - ./config/prometheus:/etc/prometheus
     ports:
       - "9090:9090"
-    volumes:
-      - ./prometheus:/app.cfg
+    restart: unless-stopped
     networks:
-      - world
-      - prometheus-cadvisor
-      - grafana-prometheus
-    command: >-
-      --config.file=/app.cfg/prometheus.yml
-      --storage.tsdb.path=/prometheus
-      --web.console.libraries=/usr/share/prometheus/console_libraries
-      --web.console.templates=/usr/share/prometheus/consoles
+      - loki
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
 
   grafana:
     depends_on:
       - loki
-    image: grafana/grafana:6.0.0
+    image: grafana/grafana:latest
+    restart: unless-stopped
     ports:
-      - "3100:3000"
+      - "3200:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
-      - GF_PATHS_PROVISIONING="/app.cfg/provisioning"
     volumes:
-      - ./grafana:/app.cfg
+      - ./config/grafana:/var/lin/grafana
     networks:
-      - world
-      - grafana-loki
-      - grafana-prometheus
+      - loki
 
 networks:
-  world:
-  promtail-loki:
-    internal: true
-  grafana-loki:
-    internal: true
-  grafana-prometheus:
-    internal: true
-  prometheus-cadvisor:
-    internal: true
+  loki:

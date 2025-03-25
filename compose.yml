@@ -104,6 +104,7 @@ services:
 
 networks:
   loki:
+    driver: bridge
 
 volumes:
   grafana-data:

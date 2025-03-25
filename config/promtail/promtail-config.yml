@@ -23,19 +23,20 @@ scrape_configs:
         labels:
           job: syslog
           __path__: /var/log/syslog
-          
+
       - targets:
           - localhost
         labels:
           job: auth
           __path__: /var/log/auth.log
-      
+
+      - targets:
+          - localhost
+        labels:
+          job: docker
+          __path__: /var/log/docker/**/*.log
+
       # Example of mapping multiple log folders.
-      # - targets:
-      #     - localhost
-      #   labels:
-      #     job: docker
-      #     __path__: /var/log/docker/**/*.log
       # - targets:
       #     - localhost
       #   labels:

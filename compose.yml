@@ -54,6 +54,7 @@ services:
   grafana:
     depends_on:
       - loki
+      - prometheus
     image: grafana/grafana:latest
     restart: unless-stopped
     ports:

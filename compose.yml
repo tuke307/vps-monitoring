@@ -2,7 +2,7 @@ services:
   loki:
     image: grafana/loki:latest
     volumes:
-      - '/config/loki:/etc/loki'
+      - './config/loki:/etc/loki'
       - loki-data:/loki
     ports:
       - "3100:3100"

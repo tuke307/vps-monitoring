@@ -30,20 +30,29 @@ scrape_configs:
         labels:
           service: 'cadvisor'
     metric_relabel_configs:
-      # Extract project/application name from Coolify
+      # Extract project from container name pattern (e.g., tuke307marienmuehlemain-servicename)
+      # Matches everything before the last hyphen as the project name
+      - source_labels: [name]
+        regex: '^/?(.*)-[^-]+$'
+        target_label: project
+        replacement: '$1'
+      
+      # If no hyphen pattern, use the full name as both project and service
+      - source_labels: [name, project]
+        regex: '^/?([^-]+);$'
+        target_label: project
+        replacement: '$1'
+      
+      # Extract project/application name from Coolify labels (if available)
       - source_labels: [container_label_coolify_application_name]
         regex: (.+)
         target_label: project
       
-      # Extract project UUID if application name not available
-      - source_labels: [container_label_coolify_application_uuid]
-        regex: (.+)
-        target_label: project_uuid
-      
-      # 1) fallback: use Docker 'name' label for alias
+      # 1) fallback: use Docker 'name' label for alias (extract service part after last hyphen)
       - source_labels: [name]
-        regex: (.+)
+        regex: '^/?(?:.*-)?([^-/]+)$'
         target_label: alias
+        replacement: '$1'
 
       # 2) if Coolify injected serviceName, overwrite alias
       - source_labels: [container_label_coolify_serviceName]

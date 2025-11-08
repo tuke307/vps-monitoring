@@ -67,3 +67,15 @@ scrape_configs:
       - targets:
           - 'localhost:9187'
           - '10.255.0.4:9187'
+
+  # Loki metrics (optional - for monitoring Loki itself)
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+
+  # Promtail metrics (optional - for monitoring log collection)
+  - job_name: 'promtail'
+    static_configs:
+      - targets:
+          - 'localhost:9080'
+          - '10.255.0.4:9080'

@@ -1,0 +1,64 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  # For local deployment: use service name 'loki'
+  # For remote deployment: replace with your Loki host IP, e.g., http://192.168.1.100:3100/loki/api/v1/push
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Scrape Docker container logs across all networks
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: status
+            values: [running]
+    relabel_configs:
+      # Use container name as primary label
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container_name'
+      
+      # Add container ID (short version)
+      - source_labels: ['__meta_docker_container_id']
+        regex: '([a-f0-9]{12}).*'
+        target_label: 'container_id'
+      
+      # Add Docker image name
+      - source_labels: ['__meta_docker_container_image']
+        target_label: 'image'
+      
+      # Add Coolify service name
+      - source_labels: ['__meta_docker_container_label_coolify_serviceName']
+        target_label: 'service'
+      
+      # Add Coolify application name
+      - source_labels: ['__meta_docker_container_label_coolify_application_name']
+        target_label: 'application'
+      
+      # Use alias label if present (your custom label)
+      - source_labels: ['__meta_docker_container_label_alias']
+        target_label: 'alias'
+      
+      # Add environment label
+      - replacement: 'production'
+        target_label: 'environment'
+      
+      # Add host label (customize this per host deployment)
+      - replacement: 'localhost'
+        target_label: 'host'
+
+  # Optional: Scrape system logs
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          __path__: /var/log/*log

@@ -1,10 +1,10 @@
 FROM prom/prometheus:latest
 
 # bring in our production config
-COPY prometheus.yml /etc/prometheus/prometheus.yml
+COPY ./prometheus.yml /etc/prometheus/prometheus.yml
 
 # copy recording and alerting rules directory (create it even if empty)
-COPY --chown=nobody:nobody rules /etc/prometheus/rules
+COPY --chown=nobody:nobody ./rules /etc/prometheus/rules
 
 # persist and serve metrics
 EXPOSE 9090

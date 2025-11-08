@@ -30,41 +30,37 @@ scrape_configs:
         labels:
           service: 'cadvisor'
     metric_relabel_configs:
-      # Extract project from container name pattern (e.g., tuke307marienmuehlemain-servicename)
-      # Matches everything before the last hyphen as the project name
-      - source_labels: [name]
-        regex: '^/?(.*)-[^-]+$'
-        target_label: project
-        replacement: '$1'
-      
-      # If no hyphen pattern, use the full name as both project and service
-      - source_labels: [name, project]
-        regex: '^/?([^-]+);$'
-        target_label: project
-        replacement: '$1'
-      
-      # Extract project/application name from Coolify labels (if available)
-      - source_labels: [container_label_coolify_application_name]
+      # Extract Coolify project name (e.g., "tony-luke")
+      - source_labels: [container_label_coolify_projectName]
         regex: (.+)
         target_label: project
       
-      # 1) fallback: use Docker 'name' label for alias (extract service part after last hyphen)
+      # Extract Coolify resource name (e.g., "tuke307vps-monitoringmain") as application
+      - source_labels: [container_label_coolify_resourceName]
+        regex: (.+)
+        target_label: application
+      
+      # Extract service name from container name (e.g., "prometheus" from "prometheus-t4480w404wkccw8gw84k08sk-214306365535")
       - source_labels: [name]
-        regex: '^/?(?:.*-)?([^-/]+)$'
-        target_label: alias
+        regex: '^/?([^-]+)-.*'
+        target_label: service
         replacement: '$1'
-
-      # 2) if Coolify injected serviceName, overwrite alias
+      
+      # Use service name as alias
+      - source_labels: [service]
+        target_label: alias
+      
+      # Override with Coolify serviceName if available (though it seems to be the same as resourceName)
       - source_labels: [container_label_coolify_serviceName]
         regex: (.+)
-        target_label: alias
+        target_label: application
 
-      # 3) if you've added your own 'alias=' Docker label, that wins
+      # Override with custom alias label if present
       - source_labels: [container_label_alias]
         regex: (.+)
         target_label: alias
 
-      # drop any metrics without an alias
+      # Drop any metrics without an alias
       - source_labels: [alias]
         regex: ""
         action: drop

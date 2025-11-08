@@ -46,8 +46,8 @@
                       "group": "prometheus",
                       "kind": "DataQuery",
                       "spec": {
-                        "expr": "sum(rate(container_cpu_usage_seconds_total{instance=~\"$instance\",alias=~\"$alias\"}[5m])) by (alias,instance)",
-                        "legendFormat": "{{alias}} ({{instance}})"
+                        "expr": "sum(rate(container_cpu_usage_seconds_total{instance=~\"$instance\",project=~\"$project\",alias=~\"$alias\"}[5m])) by (project,alias,instance)",
+                        "legendFormat": "{{project}} / {{alias}} ({{instance}})"
                       },
                       "version": "v0"
                     },
@@ -156,8 +156,8 @@
                       "group": "prometheus",
                       "kind": "DataQuery",
                       "spec": {
-                        "expr": "sum(container_memory_usage_bytes{instance=~\"$instance\",alias=~\"$alias\"}) by (alias,instance)",
-                        "legendFormat": "{{alias}} ({{instance}})"
+                        "expr": "sum(container_memory_usage_bytes{instance=~\"$instance\",project=~\"$project\",alias=~\"$alias\"}) by (project,alias,instance)",
+                        "legendFormat": "{{project}} / {{alias}} ({{instance}})"
                       },
                       "version": "v0"
                     },
@@ -266,8 +266,8 @@
                       "group": "prometheus",
                       "kind": "DataQuery",
                       "spec": {
-                        "expr": "sum(rate(container_network_receive_bytes_total{instance=~\"$instance\",alias=~\"$alias\"}[5m])) by (alias,instance)",
-                        "legendFormat": "{{alias}} ({{instance}})"
+                        "expr": "sum(rate(container_network_receive_bytes_total{instance=~\"$instance\",project=~\"$project\",alias=~\"$alias\"}[5m])) by (project,alias,instance)",
+                        "legendFormat": "{{project}} / {{alias}} ({{instance}})"
                       },
                       "version": "v0"
                     },
@@ -376,8 +376,8 @@
                       "group": "prometheus",
                       "kind": "DataQuery",
                       "spec": {
-                        "expr": "sum(rate(container_network_transmit_bytes_total{instance=~\"$instance\",alias=~\"$alias\"}[5m])) by (alias,instance)",
-                        "legendFormat": "{{alias}} ({{instance}})"
+                        "expr": "sum(rate(container_network_transmit_bytes_total{instance=~\"$instance\",project=~\"$project\",alias=~\"$alias\"}[5m])) by (project,alias,instance)",
+                        "legendFormat": "{{project}} / {{alias}} ({{instance}})"
                       },
                       "version": "v0"
                     },
@@ -596,7 +596,35 @@
           },
           "hide": "dontHide",
           "includeAll": true,
-          "label": "Alias",
+          "label": "Project",
+          "multi": true,
+          "name": "project",
+          "options": [],
+          "query": {
+            "group": "prometheus",
+            "kind": "DataQuery",
+            "spec": {
+              "__legacyStringValue": "label_values(container_cpu_usage_seconds_total{instance=~\"$instance\"}, project)"
+            },
+            "version": "v0"
+          },
+          "refresh": "never",
+          "skipUrlSync": false,
+          "sort": "disabled"
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "allValue": ".*",
+          "allowCustomValue": true,
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "hide": "dontHide",
+          "includeAll": true,
+          "label": "Service",
           "multi": true,
           "name": "alias",
           "options": [],
@@ -604,7 +632,7 @@
             "group": "prometheus",
             "kind": "DataQuery",
             "spec": {
-              "__legacyStringValue": "label_values(container_cpu_usage_seconds_total{instance=~\"$instance\"}, alias)"
+              "__legacyStringValue": "label_values(container_cpu_usage_seconds_total{instance=~\"$instance\",project=~\"$project\"}, alias)"
             },
             "version": "v0"
           },

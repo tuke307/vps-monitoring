@@ -30,6 +30,16 @@ scrape_configs:
         labels:
           service: 'cadvisor'
     metric_relabel_configs:
+      # Extract project/application name from Coolify
+      - source_labels: [container_label_coolify_application_name]
+        regex: (.+)
+        target_label: project
+      
+      # Extract project UUID if application name not available
+      - source_labels: [container_label_coolify_application_uuid]
+        regex: (.+)
+        target_label: project_uuid
+      
       # 1) fallback: use Docker 'name' label for alias
       - source_labels: [name]
         regex: (.+)
@@ -40,7 +50,7 @@ scrape_configs:
         regex: (.+)
         target_label: alias
 
-      # 3) if you’ve added your own 'alias=' Docker label, that wins
+      # 3) if you've added your own 'alias=' Docker label, that wins
       - source_labels: [container_label_alias]
         regex: (.+)
         target_label: alias

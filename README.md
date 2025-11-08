@@ -4,16 +4,18 @@ A complete monitoring and logging solution with Prometheus, Loki, and exporters,
 
 ## Architecture
 
-### This Stack (Docker Compose)
-- **Prometheus** - Metrics collection and storage
-- **Loki** - Log aggregation system
-- **Promtail** - Log collection agent
+All services run in Coolify on the same Docker network, allowing them to communicate via service names.
 
-### Existing Coolify Services
-- **Grafana** - Visualization and dashboards (with PostgreSQL)
-- **cAdvisor** - Container metrics (port 9109)
-- **Node Exporter** - Host metrics (ports 9208, 9209)
-- **PostgreSQL Exporter** - Database metrics (port 9187)
+### Services in This Stack
+- **Prometheus** - Metrics collection and storage (`prometheus:9090`)
+- **Loki** - Log aggregation system (`loki:3100`)
+- **Promtail** - Log collection agent (`promtail:9080`)
+- **cAdvisor** - Container metrics (`cadvisor:9109`)
+
+### Other Coolify Services (separate deployments)
+- **Grafana** - Visualization and dashboards
+- **Node Exporter** - Host metrics
+- **PostgreSQL Exporter** - Database metrics
 
 ## Quick Start
 
@@ -30,21 +32,29 @@ docker-compose logs -f
 docker-compose down
 ```
 
-### 2. Configure Loki in Grafana
+### 2. Configure Data Sources in Grafana
 
-In your Coolify Grafana instance:
-1. Go to **Configuration** → **Data Sources**
-2. Click **Add data source**
-3. Select **Loki**
-4. Set URL to: `http://<your-host-ip>:3100` (use your VPS IP)
-5. Click **Save & Test**
+In your Coolify Grafana instance, add these data sources:
+
+#### Prometheus
+1. Go to **Configuration** → **Data Sources** → **Add data source**
+2. Select **Prometheus**
+3. Set URL to: `http://prometheus:9090`
+4. Click **Save & Test** ✅
+
+#### Loki
+1. Go to **Configuration** → **Data Sources** → **Add data source**
+2. Select **Loki**
+3. Set URL to: `http://loki:3100`
+4. Click **Save & Test** ✅
 
 ### Access Services
 
-- **Grafana**: (Your Coolify instance)
-- **Prometheus**: http://localhost:9090
-- **Loki**: http://localhost:3100
-- **Promtail**: http://localhost:9080/targets
+All services communicate via Docker service names on the Coolify network:
+- **Prometheus**: `http://prometheus:9090`
+- **Loki**: `http://loki:3100`
+- **Promtail**: `http://promtail:9080`
+- **cAdvisor**: `http://cadvisor:9109`
 
 ## Project Structure
 
@@ -107,35 +117,15 @@ Example LogQL queries:
 rate({container_name="my-app"} |= "error" [5m])
 ```
 
-## Deployment on Multiple Hosts
+## Network Configuration
 
-For the second host (10.255.0.4), deploy Promtail separately:
+All services in this stack connect to Coolify's Docker network, allowing service-to-service communication using container names instead of IPs or localhost.
 
-### Option 1: Docker Run
-```bash
-# Create promtail config on remote host
-# Update the Loki URL to point to your primary host
-# In promtail-config.yml, change:
-# clients:
-#   - url: http://<primary-host-ip>:3100/loki/api/v1/push
-
-docker run -d \
-  --name promtail \
-  -p 9080:9080 \
-  -v /path/to/promtail-config.yml:/etc/promtail/config.yml \
-  -v /var/log:/var/log:ro \
-  -v /var/run/docker.sock:/var/run/docker.sock:ro \
-  --restart unless-stopped \
-  grafana/promtail:2.9.3 \
-  -config.file=/etc/promtail/config.yml
-```
-
-### Option 2: Deploy via Coolify
-Create a new Docker Compose service in Coolify with Promtail, similar to your cAdvisor setup.
-
-**Important**: Update the `host` label in the Promtail config to identify each host:
-- Primary host: `host: 'primary-host'`
-- Secondary host: `host: 'secondary-host'`
+**Example connections:**
+- Grafana → Prometheus: `http://prometheus:9090`
+- Grafana → Loki: `http://loki:3100`
+- Prometheus → cAdvisor: `http://cadvisor:9109`
+- Promtail → Loki: `http://loki:3100`
 
 ## Troubleshooting
 

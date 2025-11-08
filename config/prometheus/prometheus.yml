@@ -35,10 +35,22 @@ scrape_configs:
         regex: (.+)
         target_label: project
       
+      # Fallback: If no Coolify project, set to "unmanaged"
+      - source_labels: [project]
+        regex: ^$
+        target_label: project
+        replacement: 'unmanaged'
+      
       # Extract Coolify resource name (e.g., "tuke307vps-monitoringmain") as application
       - source_labels: [container_label_coolify_resourceName]
         regex: (.+)
         target_label: application
+      
+      # Fallback: If no Coolify resourceName, use container name as application
+      - source_labels: [application, name]
+        regex: ';/?(.+)'
+        target_label: application
+        replacement: '$1'
       
       # Extract service name from container name (e.g., "prometheus" from "prometheus-t4480w404wkccw8gw84k08sk-214306365535")
       - source_labels: [name]
@@ -46,14 +58,15 @@ scrape_configs:
         target_label: service
         replacement: '$1'
       
+      # Fallback: If extraction failed, use full container name as service
+      - source_labels: [service, name]
+        regex: ';/?(.+)'
+        target_label: service
+        replacement: '$1'
+      
       # Use service name as alias
       - source_labels: [service]
         target_label: alias
-      
-      # Override with Coolify serviceName if available (though it seems to be the same as resourceName)
-      - source_labels: [container_label_coolify_serviceName]
-        regex: (.+)
-        target_label: application
 
       # Override with custom alias label if present
       - source_labels: [container_label_alias]

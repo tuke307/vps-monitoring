@@ -4,7 +4,6 @@ global:
   scrape_timeout: 10s                # timeout for each scrape request
   external_labels:                   # labels for federation/remote write
     environment: 'production'
-    region: 'us-east-1'
 
 # Rule files for recording and alerting rules
 rule_files:
@@ -56,7 +55,6 @@ scrape_configs:
     static_configs:
       - targets:
           - 'localhost:9208'
-          - '10.255.0.4:9209'
         labels:
           service: 'node_exporter'
 
@@ -66,7 +64,6 @@ scrape_configs:
     static_configs:
       - targets:
           - 'localhost:9187'
-          - '10.255.0.4:9187'
 
   # Loki metrics (optional - for monitoring Loki itself)
   - job_name: 'loki'
@@ -78,4 +75,3 @@ scrape_configs:
     static_configs:
       - targets:
           - 'localhost:9080'
-          - '10.255.0.4:9080'

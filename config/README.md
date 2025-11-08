@@ -60,12 +60,6 @@ Collects logs and sends to Loki. Same config works for all hosts.
 **For local deployment** (same host as Loki):
 - Use default URL: `http://loki:3100/loki/api/v1/push`
 
-**For remote deployment** (different host):
-1. Update the `clients` URL to point to your Loki host IP
-   - Example: `http://192.168.1.100:3100/loki/api/v1/push`
-2. Update the `host` label to identify the machine
-   - Example: Change `localhost` to `secondary-host` or `10.255.0.4`
-
 ## Common Modifications
 
 ### Add a New Service to Prometheus

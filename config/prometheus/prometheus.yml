@@ -27,7 +27,7 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets:
-          - 'cadvisor-qgw4c44kcko0gwkgsosk4o8c:9109'
+          - 'cadvisor-t4480w404wkccw8gw84k08sk-201930574156:9109'
         labels:
           service: 'cadvisor'
     metric_relabel_configs:

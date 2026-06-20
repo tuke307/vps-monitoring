@@ -9,7 +9,13 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  # Scrape Docker container logs across all networks
+  # ---------------------------------------------------------------------
+  # All running Docker containers on the host.
+  #
+  # Promtail tails via the Docker socket, so it sees containers on EVERY
+  # network (kds, marienmuehle, monitoring, ...) regardless of network
+  # isolation between them. No per-app allowlist is needed.
+  # ---------------------------------------------------------------------
   - job_name: docker
     docker_sd_configs:
       - host: unix:///var/run/docker.sock
@@ -18,41 +24,54 @@ scrape_configs:
           - name: status
             values: [running]
     relabel_configs:
-      # Use container name as primary label
+      # --- identity labels ------------------------------------------------
       - source_labels: ['__meta_docker_container_name']
         regex: '/(.*)'
         target_label: 'container_name'
-      
-      # Add container ID (short version)
+
       - source_labels: ['__meta_docker_container_id']
         regex: '([a-f0-9]{12}).*'
         target_label: 'container_id'
-      
-      # Add Docker image name
+
       - source_labels: ['__meta_docker_container_image']
         target_label: 'image'
-      
-      # Add Coolify service name
-      - source_labels: ['__meta_docker_container_label_coolify_serviceName']
+
+      # --- project + service, derived from the image name -----------------
+      # ghcr.io/tuke307/kds-api:latest       -> project=kds,          service=api
+      # ghcr.io/tuke307/marienmuehle-web     -> project=marienmuehle,  service=web
+      # ghcr.io/tuke307/tonyluke-web         -> project=tonyluke,      service=web
+      # These power the per-project dashboards and avoid the Coolify
+      # container-name suffixes (e.g. api-<uuid>-<n>) which collide
+      # between projects that share service names.
+      - source_labels: ['image']
+        regex: '^.*\/(kds|marienmuehle|tonyluke)-(?:api|web|email-worker|db-migrate)(?::.*)?$'
+        target_label: 'project'
+        replacement: '${1}'
+
+      - source_labels: ['image']
+        regex: '^.*\/(?:kds|marienmuehle|tonyluke)-(api|web|email-worker|db-migrate)(?::.*)?$'
         target_label: 'service'
-      
-      # Add Coolify application name
+        replacement: '${1}'
+
+      # --- best-effort Coolify labels (NOT required by the dashboards) ----
+      # Docker SD normalises container-label names; if these stay empty,
+      # check the exact spelling shown in `promtail /targets` and adjust.
       - source_labels: ['__meta_docker_container_label_coolify_application_name']
         target_label: 'application'
-      
-      # Use alias label if present (your custom label)
+      - source_labels: ['__meta_docker_container_label_coolify_resourceName']
+        target_label: 'resource'
       - source_labels: ['__meta_docker_container_label_alias']
         target_label: 'alias'
-      
-      # Add environment label
-      - replacement: 'production'
-        target_label: 'environment'
-      
-      # Add host label
-      - replacement: 'localhost'
-        target_label: 'host'
 
-  # Optional: Scrape system logs
+      # --- static labels --------------------------------------------------
+      - target_label: 'environment'
+        replacement: 'production'
+      - target_label: 'host'
+        replacement: 'coolify-vps'
+
+  # ---------------------------------------------------------------------
+  # Optional: host system logs.
+  # ---------------------------------------------------------------------
   - job_name: system
     static_configs:
       - targets:

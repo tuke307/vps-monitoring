@@ -117,6 +117,57 @@ Example LogQL queries:
 rate({container_name="my-app"} |= "error" [5m])
 ```
 
+## Per-Application Logging (kds + marienmuehle)
+
+Promtail tails **every** running container on the host via the Docker socket, so both
+`kds` and `marienmuehle` services are collected automatically — no per-app allowlist is
+needed, and network isolation between the app networks does not matter.
+
+### `project` and `service` labels
+
+Because Coolify names both projects' containers the same way (`api-<uuid>-<n>`,
+`web-<uuid>-<n>`, …), selecting logs by `container_name` mixes the two projects together.
+Instead, Promtail derives two stable labels from the **image** name:
+
+| Image                                   | `project`     | `service`      |
+|-----------------------------------------|---------------|----------------|
+| `ghcr.io/tuke307/kds-api:latest`        | `kds`         | `api`          |
+| `ghcr.io/tuke307/kds-web:latest`        | `kds`         | `web`          |
+| `ghcr.io/tuke307/kds-email-worker`      | `kds`         | `email-worker` |
+| `ghcr.io/tuke307/marienmuehle-api`      | `marienmuehle`| `api`          |
+| `ghcr.io/tuke307/tonyluke-web`          | `tonyluke`    | `web`          |
+
+All dashboards query by these labels, so kds, marienmuehle, and tonyluke never cross-contaminate.
+
+### Dashboards
+
+| File                          | Scope                                  |
+|-------------------------------|----------------------------------------|
+| `dashboards/kds-logs.json`        | KDS API / Web / Email-worker           |
+| `dashboards/marienmuehle-logs.json`| Marienmuehle API / Web / Email-worker  |
+| `dashboards/tonyluke-logs.json`    | Tony Luke Portfolio (web)              |
+| `dashboards/overview.json`        | All projects, with `$project`/`$service` filters |
+| `dashboards/container-metrics.json`| cAdvisor container metrics             |
+
+Import them in Grafana: **Dashboards → New → Import → upload JSON**. When prompted,
+select the Loki datasource.
+
+> Note: `db-migrate` containers run once and exit (`restart: 'no'`) and Promtail only
+> tails `running` containers, so their logs are not captured. That is expected.
+
+### Example queries
+
+```logql
+# All kds logs
+{project="kds"}
+
+# kds API errors only
+{project="kds", service="api"} |= "error"
+
+# Everything across all projects (kds/marienmuehle are JSON; tonyluke is plain text)
+{project=~"kds|marienmuehle|tonyluke"} | json
+```
+
 ## Network Configuration
 
 All services in this stack connect to Coolify's Docker network, allowing service-to-service communication using container names instead of IPs or localhost.

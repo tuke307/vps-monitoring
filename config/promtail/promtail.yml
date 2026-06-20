@@ -3,7 +3,12 @@ server:
   grpc_listen_port: 0
 
 positions:
-  filename: /tmp/positions.yaml
+  # Persisted on the `promtail-positions` volume (see docker-compose.yml) so
+  # promtail does NOT re-read every container's full log history each time the
+  # container is recreated. Re-reading history floods Loki with weeks-old
+  # samples that get rejected with HTTP 400 ("timestamp too old") and stall
+  # live ingestion behind the backlog.
+  filename: /positions/positions.yaml
 
 clients:
   - url: http://loki:3100/loki/api/v1/push
@@ -54,9 +59,10 @@ scrape_configs:
         replacement: '${1}'
 
       # --- best-effort Coolify labels (NOT required by the dashboards) ----
-      # Docker SD normalises container-label names; if these stay empty,
-      # check the exact spelling shown in `promtail /targets` and adjust.
-      - source_labels: ['__meta_docker_container_label_coolify_application_name']
+      # Casing matches the real Docker-SD meta labels (confirmed from the
+      # running stack): coolify.serviceName / coolify.applicationName /
+      # coolify.resourceName. Adjust here if a label stays empty.
+      - source_labels: ['__meta_docker_container_label_coolify_applicationName']
         target_label: 'application'
       - source_labels: ['__meta_docker_container_label_coolify_resourceName']
         target_label: 'resource'

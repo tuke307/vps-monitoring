@@ -52,8 +52,13 @@ ruler:
 limits_config:
   retention_period: 744h  # 31 days
   enforce_metric_name: false
-  reject_old_samples: true
-  reject_old_samples_max_age: 168h
+  # Accept older / out-of-order samples. Promtail re-reads existing container
+  # log files on its first run (or whenever its positions file is lost),
+  # including entries older than the previous 168h limit, which Loki would
+  # otherwise reject with HTTP 400 ("timestamp too old") and stall live
+  # ingestion behind the backlog. retention_period (744h) still bounds storage.
+  reject_old_samples: false
+  reject_old_samples_max_age: 744h
   max_cache_freshness_per_query: 10m
   split_queries_by_interval: 15m
   max_query_parallelism: 32

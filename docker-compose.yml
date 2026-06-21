@@ -22,7 +22,7 @@ services:
 
   # cAdvisor - Container metrics
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor:v0.60.0
     container_name: cadvisor
     ports:
       - "9109:9109"
@@ -49,7 +49,7 @@ services:
 
   # Loki - Log aggregation system
   loki:
-    image: grafana/loki:2.9.3
+    image: grafana/loki:3.7.2
     container_name: loki
     ports:
       - "3100:3100"
@@ -68,7 +68,7 @@ services:
 
   # Promtail - Log collection agent
   promtail:
-    image: grafana/promtail:2.9.3
+    image: grafana/promtail:3.7.2
     container_name: promtail
     ports:
       - "9080:9080"

@@ -1,4 +1,4 @@
-FROM prom/prometheus:latest
+FROM prom/prometheus:3.12.0
 
 # bring in our production config
 COPY ./prometheus.yml /etc/prometheus/prometheus.yml

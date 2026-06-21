@@ -136,7 +136,7 @@
         {
           "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
           "editorMode": "code",
-          "expr": "{project=\"marienmuehle\", service=\"api\"} | json | line_format \"{{.timestamp}} [{{.level}}] {{.message}}\"",
+          "expr": "{project=\"marienmuehle\", service=\"api\"} | json | __error__=\"\" | line_format \"{{.timestamp}} [{{.level}}] {{.message}}\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -162,7 +162,7 @@
         {
           "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
           "editorMode": "code",
-          "expr": "{project=\"marienmuehle\", service=\"email-worker\"} | json | line_format \"{{.timestamp}} [{{.level}}] {{.message}}\"",
+          "expr": "{project=\"marienmuehle\", service=\"email-worker\"} | json | __error__=\"\" | line_format \"{{.timestamp}} [{{.level}}] {{.message}}\"",
           "queryType": "range",
           "refId": "A"
         }

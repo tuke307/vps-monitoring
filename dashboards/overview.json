@@ -210,6 +210,7 @@
         "refresh": 1,
         "multi": true,
         "includeAll": true,
+        "allValue": "kds|marienmuehle|tonyluke",
         "current": { "selected": true, "text": "All", "value": "$__all" },
         "regex": "",
         "sort": 1
@@ -226,6 +227,7 @@
         "refresh": 1,
         "multi": true,
         "includeAll": true,
+        "allValue": ".+",
         "current": { "selected": true, "text": "All", "value": "$__all" },
         "regex": "",
         "sort": 1

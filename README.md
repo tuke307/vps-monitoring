@@ -2,6 +2,8 @@
 
 A complete monitoring and logging solution with Prometheus, Loki, and exporters, integrated with Coolify.
 
+> 📖 **[Operations & Deployment Guide](docs/OPERATIONS.md)** — how logs/metrics flow, the `project`/`service` label scheme, the Coolify deploy workflow, image-tag conventions, common errors, and how to add a new app to monitoring.
+
 ## Architecture
 
 All services run in Coolify on the same Docker network, allowing them to communicate via service names.

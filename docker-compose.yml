@@ -52,7 +52,7 @@ services:
 
   # Loki - Log aggregation system
   loki:
-    image: grafana/loki:3.7.2
+    image: grafana/loki:v3.7.2
     container_name: loki
     ports:
       - "3100:3100"
@@ -71,7 +71,7 @@ services:
 
   # Promtail - Log collection agent
   promtail:
-    image: grafana/promtail:3.7.2
+    image: grafana/promtail:v3.7.2
     container_name: promtail
     ports:
       - "9080:9080"

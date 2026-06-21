@@ -22,21 +22,25 @@ services:
 
   # cAdvisor - Container metrics
   cadvisor:
-    # v0.47.0 is the last release WITH the Docker factory (removed in v0.49).
-    # v0.49+/v0.60 fall back to the Raw factory and emit no container_label_*
-    # metrics, which the prometheus relabels + container-metrics dashboard need.
-    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    image: ghcr.io/google/cadvisor:0.56.1
     container_name: cadvisor
     ports:
       - "9109:9109"
     volumes:
       - /:/rootfs:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # whole /var/run (not just docker.sock) so cAdvisor can reach the Docker
+      # + containerd runtime sockets and register its docker factory
+      - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
     command:
       - '-port=9109'
+      - '--housekeeping_interval=15s'
+      # project/service are derived from the image label in prometheus.yml, so
+      # docker container labels aren't needed here (keeps cardinality low)
+      - '--store_container_labels=false'
+      - '--docker_only=true'
     devices:
       - /dev/kmsg
     privileged: true
@@ -52,7 +56,7 @@ services:
 
   # Loki - Log aggregation system
   loki:
-    image: grafana/loki:v3.7.2
+    image: grafana/loki:3.7.2
     container_name: loki
     ports:
       - "3100:3100"
@@ -71,7 +75,7 @@ services:
 
   # Promtail - Log collection agent
   promtail:
-    image: grafana/promtail:v3.7.2
+    image: grafana/promtail:3.7.2
     container_name: promtail
     ports:
       - "9080:9080"

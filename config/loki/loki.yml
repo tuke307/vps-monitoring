@@ -51,7 +51,6 @@ ruler:
 
 limits_config:
   retention_period: 744h  # 31 days
-  enforce_metric_name: false
   # Accept older / out-of-order samples. Promtail re-reads existing container
   # log files on its first run (or whenever its positions file is lost),
   # including entries older than the previous 168h limit, which Loki would

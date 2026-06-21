@@ -30,47 +30,20 @@ scrape_configs:
         labels:
           service: 'cadvisor'
     metric_relabel_configs:
-      # Extract Coolify project name (e.g., "tony-luke")
-      - source_labels: [container_label_coolify_projectName]
-        regex: (.+)
+      # cAdvisor (>= 0.49) no longer reliably exposes container_label_* metrics
+      # on Docker hosts, so derive project + service from the image label
+      # instead (version-agnostic, mirrors promtail).
+      #   ghcr.io/tuke307/kds-api          -> project=kds,          service=api
+      #   ghcr.io/tuke307/marienmuehle-web -> project=marienmuehle, service=web
+      #   ghcr.io/tuke307/tonyluke-web     -> project=tonyluke,     service=web
+      - source_labels: [image]
+        regex: '^(?:.*\/)?(kds|marienmuehle|tonyluke)-(?:api|web|email-worker|db-migrate)([@:].*)?$'
         target_label: project
-      
-      # Extract Coolify resource name (e.g., "tuke307vps-monitoringmain") as application
-      - source_labels: [container_label_coolify_resourceName]
-        regex: (.+)
-        target_label: application
-      
-      # Extract service name from Coolify container (e.g., "prometheus" from "prometheus-t4480w404wkccw8gw84k08sk-214306365535")
-      - source_labels: [name]
-        regex: '^/?([^-]+)-[a-z0-9]+-[0-9]+$'
-        target_label: alias
-        replacement: '$1'
-      
-      # For non-Coolify containers, use the container name as-is
-      - source_labels: [alias]
-        regex: ^$
-        replacement: 'unmanaged'
-        target_label: project
-      
-      - source_labels: [alias, name]
-        regex: '^;/?(.+)$'
-        target_label: alias
-        replacement: '$1'
-      
-      - source_labels: [alias, name]
-        regex: '^;/?(.+)$'
-        target_label: application
-        replacement: '$1'
-
-      # Override with custom alias label if present
-      - source_labels: [container_label_alias]
-        regex: (.+)
-        target_label: alias
-
-      # Drop any metrics without an alias
-      - source_labels: [alias]
-        regex: ^$
-        action: drop
+        replacement: '${1}'
+      - source_labels: [image]
+        regex: '^(?:.*\/)?(?:kds|marienmuehle|tonyluke)-(api|web|email-worker|db-migrate)([@:].*)?$'
+        target_label: service
+        replacement: '${1}'
 
   # Node Exporter on each host
   - job_name: 'node_exporter'

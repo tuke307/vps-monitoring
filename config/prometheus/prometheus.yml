@@ -45,11 +45,13 @@ scrape_configs:
         target_label: service
         replacement: '${1}'
 
-  # Node Exporter on each host
+  # Node Exporter - host metrics (CPU, RAM, disk, network, load).
+  # Target is the in-stack service name, NOT localhost: the Prometheus container
+  # can only reach other containers on the monitoring network.
   - job_name: 'node_exporter'
     static_configs:
       - targets:
-          - 'localhost:9208'
+          - 'node-exporter:9100'
         labels:
           service: 'node_exporter'
 

@@ -3,6 +3,8 @@
 A complete monitoring and logging solution with Prometheus, Loki, and exporters, integrated with Coolify.
 
 > 📖 **[Operations & Deployment Guide](docs/OPERATIONS.md)** — how logs/metrics flow, the `project`/`service` label scheme, the Coolify deploy workflow, image-tag conventions, common errors, and how to add a new app to monitoring.
+>
+> 🔔 **[Alerting Guide](docs/ALERTS.md)** — enable email alerts (SMTP on the Grafana resource), contact points, and the host alert rules (CPU/RAM/disk/host-down).
 
 ## Architecture
 
@@ -13,10 +15,10 @@ All services run in Coolify on the same Docker network, allowing them to communi
 - **Loki** - Log aggregation system (`loki:3100`)
 - **Alloy** - Log collection agent (`alloy:12345`)
 - **cAdvisor** - Container metrics (`cadvisor:9109`)
+- **Node Exporter** - Host metrics: CPU, RAM, disk, network (`node-exporter:9100`)
 
 ### Other Coolify Services (separate deployments)
-- **Grafana** - Visualization and dashboards
-- **Node Exporter** - Host metrics
+- **Grafana** - Visualization and dashboards (see [docs/ALERTS.md](docs/ALERTS.md) for SMTP + alert setup)
 - **PostgreSQL Exporter** - Database metrics
 
 ## Quick Start
@@ -150,6 +152,7 @@ All dashboards query by these labels, so kds, marienmuehle, and tonyluke never c
 | `dashboards/tonyluke-logs.json`    | Tony Luke Portfolio (web)              |
 | `dashboards/overview.json`        | All projects, with `$project`/`$service` filters |
 | `dashboards/container-metrics.json`| cAdvisor container metrics             |
+| `dashboards/vps-overview.json`     | Host metrics (node-exporter): CPU/RAM/disk/network |
 
 Import them in Grafana: **Dashboards → New → Import → upload JSON**. When prompted,
 select the Loki datasource.

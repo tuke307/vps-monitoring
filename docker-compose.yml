@@ -73,35 +73,34 @@ services:
       timeout: 10s
       retries: 3
 
-  # Promtail - Log collection agent
-  promtail:
-    image: grafana/promtail:3.7.2
-    container_name: promtail
+  # Alloy - Log collection (replaces the deprecated Promtail)
+  alloy:
+    image: grafana/alloy:v1.17.0
+    container_name: alloy
     ports:
-      - "9080:9080"
+      - "12345:12345"
     volumes:
-      - ./config/promtail/promtail.yml:/etc/promtail/config.yml
-      - /var/log:/var/log:ro
+      - ./config/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - promtail-positions:/positions
-    command: -config.file=/etc/promtail/config.yml
+      # persistent positions so restarts resume instead of re-reading history
+      - alloy-data:/var/lib/alloy/data
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
     restart: unless-stopped
     networks:
       - monitoring
     depends_on:
       - loki
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9080/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 volumes:
   loki-data:
     driver: local
   prometheus-data:
     driver: local
-  promtail-positions:
+  alloy-data:
     driver: local
 
 networks:

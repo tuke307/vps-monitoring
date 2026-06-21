@@ -9,7 +9,7 @@ All services run in Coolify on the same Docker network, allowing them to communi
 ### Services in This Stack
 - **Prometheus** - Metrics collection and storage (`prometheus:9090`)
 - **Loki** - Log aggregation system (`loki:3100`)
-- **Promtail** - Log collection agent (`promtail:9080`)
+- **Alloy** - Log collection agent (`alloy:12345`)
 - **cAdvisor** - Container metrics (`cadvisor:9109`)
 
 ### Other Coolify Services (separate deployments)
@@ -22,7 +22,7 @@ All services run in Coolify on the same Docker network, allowing them to communi
 ### 1. Start Monitoring Stack
 
 ```bash
-# Start Prometheus, Loki, and Promtail
+# Start Prometheus, Loki, and Alloy
 docker-compose up -d
 
 # View logs
@@ -53,7 +53,7 @@ In your Coolify Grafana instance, add these data sources:
 All services communicate via Docker service names on the Coolify network:
 - **Prometheus**: `http://prometheus:9090`
 - **Loki**: `http://loki:3100`
-- **Promtail**: `http://promtail:9080`
+- **Alloy**: `http://alloy:12345`
 - **cAdvisor**: `http://cadvisor:9109`
 
 ## Project Structure
@@ -68,8 +68,8 @@ vps-monitoring/
 │   │   └── rules/                 # Alert & recording rules
 │   ├── loki/
 │   │   └── loki.yml              # Loki configuration
-│   └── promtail/
-│       └── promtail.yml           # Promtail configuration
+│   └── alloy/
+│       └── config.alloy           # Alloy configuration (River syntax)
 ├── check-health.sh                 # Health check script
 ├── SETUP_GUIDE.md                  # Detailed setup instructions
 └── README.md
@@ -87,12 +87,12 @@ vps-monitoring/
 - **Retention**: 31 days
 - **Port**: 3100
 
-### Promtail
-- **Config**: `config/promtail/promtail.yml`
-- **Port**: 9080
+### Alloy
+- **Config**: `config/alloy/config.alloy` (River syntax)
+- **Port**: 12345
 - **Scrapes**:
   - Docker container logs (via Docker socket)
-  - System logs from `/var/log` (optional)
+  - Derives `project`/`service` from the image name (see Per-Application Logging)
   - Coolify labels (service, application, alias)
 
 ### Grafana
@@ -176,7 +176,7 @@ All services in this stack connect to Coolify's Docker network, allowing service
 - Grafana → Prometheus: `http://prometheus:9090`
 - Grafana → Loki: `http://loki:3100`
 - Prometheus → cAdvisor: `http://cadvisor:9109`
-- Promtail → Loki: `http://loki:3100`
+- Alloy → Loki: `http://loki:3100`
 
 ## Troubleshooting
 

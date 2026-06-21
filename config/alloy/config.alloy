@@ -1,0 +1,92 @@
+// Grafana Alloy - log collection (replaces the deprecated Promtail).
+//
+// Discovers every Docker container via the socket, derives stable stream
+// labels, and ships logs to Loki. Positions are persisted under
+// --storage.path (the `alloy-data` volume in docker-compose.yml) so that
+// restarts resume from the last read offset instead of re-reading container
+// log history.
+
+logging {
+  level = "info"
+}
+
+// ---------------------------------------------------------------------------
+// Discover every Docker container on the host. Alloy tails via the Docker
+// socket, so it sees containers on every network (kds, marienmuehle,
+// monitoring, ...) regardless of network isolation between them.
+// ---------------------------------------------------------------------------
+discovery.docker "containers" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
+}
+
+// ---------------------------------------------------------------------------
+// Relabel: derive stable stream labels. `project` and `service` come from the
+// image name (version-agnostic; mirrors the prometheus.yml metric relabeling),
+// avoiding the Coolify container-name suffixes that collide between projects.
+// Rules apply in order, so `image` (set early) is available to the later
+// project/service rules.
+// ---------------------------------------------------------------------------
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  // container name (strip leading "/")
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container_name"
+  }
+
+  // short container id
+  rule {
+    source_labels = ["__meta_docker_container_id"]
+    regex         = "([a-f0-9]{12}).*"
+    target_label  = "container_id"
+  }
+
+  // full image reference
+  rule {
+    source_labels = ["__meta_docker_container_image"]
+    target_label  = "image"
+  }
+
+  // project from image: ghcr.io/tuke307/kds-api -> kds
+  rule {
+    source_labels = ["image"]
+    regex         = "^(?:.*/)?(kds|marienmuehle|tonyluke)-(?:api|web|email-worker|db-migrate)([@:].*)?$"
+    target_label  = "project"
+    replacement   = "$1"
+  }
+
+  // service from image: kds-api -> api
+  rule {
+    source_labels = ["image"]
+    regex         = "^(?:.*/)?(?:kds|marienmuehle|tonyluke)-(api|web|email-worker|db-migrate)([@:].*)?$"
+    target_label  = "service"
+    replacement   = "$1"
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Tail the discovered containers and forward to Loki. Static default labels
+// are applied to every stream; the per-target labels (container_name, image,
+// project, service, ...) come from discovery.relabel above.
+// ---------------------------------------------------------------------------
+loki.source.docker "containers" {
+  host    = "unix:///var/run/docker.sock"
+  targets = discovery.relabel.containers.output
+  labels = {
+    "environment" = "production",
+    "host"        = "coolify-vps",
+  }
+  forward_to = [loki.write.loki.receiver]
+}
+
+// ---------------------------------------------------------------------------
+// Ship to Loki.
+// ---------------------------------------------------------------------------
+loki.write "loki" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

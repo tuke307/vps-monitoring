@@ -44,26 +44,16 @@ discovery.relabel "containers" {
     target_label  = "container_id"
   }
 
-  // full image reference
+  // project + service from explicit Docker labels set in each app's compose.yml
+  // (Alloy's discovery.docker doesn't reliably expose the image meta label, so
+  //  containers are tagged directly with app.project / app.service).
   rule {
-    source_labels = ["__meta_docker_container_image"]
-    target_label  = "image"
-  }
-
-  // project from image: ghcr.io/tuke307/kds-api -> kds
-  rule {
-    source_labels = ["image"]
-    regex         = "^(?:.*/)?(kds|marienmuehle|tonyluke)-(?:api|web|email-worker|db-migrate)([@:].*)?$"
+    source_labels = ["__meta_docker_container_label_app_project"]
     target_label  = "project"
-    replacement   = "$1"
   }
-
-  // service from image: kds-api -> api
   rule {
-    source_labels = ["image"]
-    regex         = "^(?:.*/)?(?:kds|marienmuehle|tonyluke)-(api|web|email-worker|db-migrate)([@:].*)?$"
+    source_labels = ["__meta_docker_container_label_app_service"]
     target_label  = "service"
-    replacement   = "$1"
   }
 }
 

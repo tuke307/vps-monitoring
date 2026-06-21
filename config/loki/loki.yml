@@ -72,5 +72,8 @@ compactor:
   working_directory: /loki/compactor
   compaction_interval: 10m
   retention_enabled: true
+  # Required by Loki 3.x when retention is enabled; uses the filesystem object
+  # store configured under common.storage.filesystem.
+  delete_request_store: filesystem
   retention_delete_delay: 2h
   retention_delete_worker_count: 150

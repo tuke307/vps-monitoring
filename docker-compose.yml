@@ -22,7 +22,10 @@ services:
 
   # cAdvisor - Container metrics
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.60.0
+    # v0.47.0 is the last release WITH the Docker factory (removed in v0.49).
+    # v0.49+/v0.60 fall back to the Raw factory and emit no container_label_*
+    # metrics, which the prometheus relabels + container-metrics dashboard need.
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
     container_name: cadvisor
     ports:
       - "9109:9109"

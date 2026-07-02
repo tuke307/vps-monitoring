@@ -136,7 +136,7 @@
         {
           "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
           "editorMode": "code",
-          "expr": "{project=\"tonyluke\", service=\"web\"}",
+          "expr": "{project=\"tonyluke\", service=\"web\"} | json | __error__=\"\" | line_format \"{{.timestamp}} [{{.level}}] {{.message}}\"",
           "queryType": "range",
           "refId": "A"
         }

@@ -184,7 +184,7 @@
         {
           "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
           "editorMode": "code",
-          "expr": "{project=~\"$project\", service=~\"$service\"} | json | line_format \"[{{.project}}/{{.service}}] {{.timestamp}} [{{.level}}] {{.message}}\"",
+          "expr": "{project=~\"$project\", service=~\"$service\"} | json | __error__=\"\" | line_format \"[{{.project}}/{{.service}}] {{.timestamp}} [{{.level}}] {{.message}}\"",
           "queryType": "range",
           "refId": "A"
         }

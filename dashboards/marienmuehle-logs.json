@@ -188,7 +188,7 @@
         {
           "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
           "editorMode": "code",
-          "expr": "{project=\"marienmuehle\", service=\"web\"}",
+          "expr": "{project=\"marienmuehle\", service=\"web\"} | json | __error__=\"\" | line_format \"{{.timestamp}} [{{.level}}] {{.message}}\"",
           "queryType": "range",
           "refId": "A"
         }

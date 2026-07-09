@@ -56,6 +56,11 @@ def load_datasources(grafana):
         dss = grafana.datasource.list_datasources()
     except GrafanaException as e:
         sys.exit(f"FATAL: could not list datasources [{e.status_code}]: {e.response}")
+    except OSError as e:
+        sys.exit(
+            f"FATAL: cannot reach Grafana at {GRAFANA_URL}: "
+            f"{type(e).__name__}: {e}"
+        )
     return [
         {"name": d.get("name", ""), "type": d.get("type", ""), "uid": d.get("uid", "")}
         for d in dss
@@ -194,6 +199,13 @@ def main():
                 print(f"Probe body: {body!r}")
             detail = e.response or e.message or "(empty response body)"
             print(f"FAIL  {f.name} [{e.status_code}] ({title}): {detail}")
+            continue
+        except OSError as e:
+            failed += 1
+            print(
+                f"FAIL  {f.name} ({title}): connection error: "
+                f"{type(e).__name__}: {e}"
+            )
             continue
 
         pushed += 1

@@ -1,0 +1,12 @@
+[project]
+name = "vps-monitoring"
+version = "0.1.0"
+description = "VPS monitoring stack — Grafana dashboard sync tooling (scripts/sync-dashboards.py)"
+requires-python = ">=3.11"
+dependencies = [
+    "grafana-client>=5.1.0",
+]
+
+[tool.uv]
+# This is a scripts-only repo (no importable package), so don't try to build one.
+package = false

@@ -136,7 +136,7 @@
         {
           "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
           "editorMode": "code",
-          "expr": "{project=\"tonyluke\", service=\"web\"} | json | __error__=\"\" | line_format \"{{.timestamp}} [{{.level}}] {{.message}}\"",
+          "expr": "{project=\"tonyluke\", service=\"web\"} | json | __error__=\"\" | line_format \"[{{.level}}] {{.message}}\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -162,7 +162,7 @@
         {
           "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
           "editorMode": "code",
-          "expr": "{project=\"tonyluke\"} |~ \"(?i)(error|exception|fail|fatal)\"",
+          "expr": "{project=\"tonyluke\"} |~ \"(?i)(error|exception|fail|fatal)\" | json | __error__=\"\" | line_format \"[{{.level}}] {{.message}}\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -180,7 +180,7 @@
   "timezone": "browser",
   "title": "Tony Luke Portfolio Logs",
   "uid": "tonyluke-logs",
-  "version": 1,
+  "version": 2,
   "weekStart": "",
   "__inputs": [
     {

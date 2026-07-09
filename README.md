@@ -150,12 +150,30 @@ All dashboards query by these labels, so kds, marienmuehle, and tonyluke never c
 | `dashboards/kds-logs.json`        | KDS API / Web / Email-worker           |
 | `dashboards/marienmuehle-logs.json`| Marienmuehle API / Web / Email-worker  |
 | `dashboards/tonyluke-logs.json`    | Tony Luke Portfolio (web)              |
-| `dashboards/overview.json`        | All projects, with `$project`/`$service` filters |
+| `dashboards/application-overview.json`        | All projects, with `$project`/`$service` filters |
 | `dashboards/container-metrics.json`| cAdvisor container metrics             |
 | `dashboards/vps-overview.json`     | Host metrics (node-exporter): CPU/RAM/disk/network |
 
 Import them in Grafana: **Dashboards → New → Import → upload JSON**. When prompted,
 select the Loki datasource.
+
+#### Auto-sync via CI (push → Grafana)
+
+A GitHub Actions workflow (`.github/workflows/sync-grafana-dashboards.yml`) pushes every
+`dashboards/*.json` to Grafana automatically on push to `main`, so you never import by hand.
+It strips the manual-import wrappers and resolves the `${DS_LOKI}` / `${DS_PROMETHEUS}`
+placeholders to your real datasource UIDs (`scripts/sync-dashboards.py`, stdlib-only).
+Dashboards with an unresolved placeholder or no stable `uid` are skipped, never overwritten.
+
+One-time setup:
+
+1. In Grafana: **Administration → Users and access → Service accounts → Add service account**
+   (role **Editor**) → **Add service account token**. Copy the token.
+2. In the GitHub repo **Settings → Secrets and variables → Actions**:
+   - **Variables** (*New repository variable*): `GRAFANA_URL` (e.g. `https://grafana.yourdomain.com`)
+     and, optionally, `GRAFANA_FOLDER_UID` (folder UID; default: General)
+   - **Secrets** (*New repository secret*): `GRAFANA_SERVICE_ACCOUNT_TOKEN` — the token from step 1
+3. Push a dashboard (or run it manually: **Actions → Sync Grafana Dashboards → Run workflow**).
 
 > Note: `db-migrate` containers run once and exit (`restart: 'no'`) and Promtail only
 > tails `running` containers, so their logs are not captured. That is expected.

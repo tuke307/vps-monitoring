@@ -1,0 +1,36 @@
+name: Sync Grafana Dashboards
+
+# On push to main that touches a dashboard (or this tooling), normalize each
+# dashboards/*.json and upsert it into Grafana via the HTTP API — no manual
+# "Import" in the Grafana UI. Also runnable manually from the Actions tab.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dashboards/**"
+      - "scripts/sync-dashboards.py"
+      - ".github/workflows/sync-grafana-dashboards.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# Avoid two syncs racing if several pushes land close together.
+concurrency:
+  group: grafana-dashboard-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync dashboards to Grafana
+        env:
+          # Non-sensitive config -> repo Variables; token -> repo Secret
+          GRAFANA_URL: ${{ vars.GRAFANA_URL }}
+          GRAFANA_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GRAFANA_SERVICE_ACCOUNT_TOKEN }}
+          GRAFANA_FOLDER_UID: ${{ vars.GRAFANA_FOLDER_UID }}
+        run: python3 scripts/sync-dashboards.py

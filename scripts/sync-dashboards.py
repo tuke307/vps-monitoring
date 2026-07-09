@@ -28,7 +28,12 @@ import json
 import os
 import re
 import sys
+import warnings
 from pathlib import Path
+
+# grafana-client 5.1.0 ships a harmless SyntaxWarning in datasource.py;
+# silence it so it doesn't clutter CI logs.
+warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 from grafana_client import GrafanaApi, TokenAuth
 from grafana_client.client import GrafanaException
@@ -104,28 +109,38 @@ def transform(dash, datasources):
     return dash, unresolved
 
 
-def probe_write(grafana, payload):
-    """Re-send one POST through grafana-client's own niquests session.
+def diagnose(grafana, payload):
+    """Capture full response headers for a known-good GET and the failing POST.
 
-    grafana-client raises on HTTP errors but discards the response headers,
-    which are exactly what distinguishes a Grafana 403 (X-Grafana-Version +
-    JSON message) from a 403 returned by a reverse proxy / WAF in front of
-    Grafana (Server/Via/CF-Ray, empty or HTML body). This probe gets them back.
+    grafana-client raises on HTTP errors but discards the response headers.
+    Those headers are the clue: Grafana always sends 'x-grafana-version', so
+    if the GET has it but the POST does not, the POST is being answered by a
+    reverse proxy / WAF in front of Grafana, not by Grafana itself.
     """
-    try:
-        resp = grafana.client.s.post(
-            GRAFANA_URL + "/api/dashboards/db",
-            json=payload,
-            auth=TokenAuth(token=TOKEN),
-            timeout=TIMEOUT,
-        )
-        return resp.status_code, dict(resp.headers), resp.text or ""
-    except Exception as e:  # diagnostic only — never crash the run
-        return None, {}, f"<probe request failed: {e}>"
+    results = []
+    for label, method, url, kwargs in (
+        ("GET  /api/datasources", "GET", "/api/datasources", {}),
+        ("POST /api/dashboards/db", "POST", "/api/dashboards/db",
+         {"json": payload}),
+    ):
+        try:
+            resp = grafana.client.s.request(
+                method,
+                GRAFANA_URL + url,
+                auth=TokenAuth(token=TOKEN),
+                timeout=TIMEOUT,
+                **kwargs,
+            )
+            results.append(
+                (label, resp.status_code, dict(resp.headers), (resp.text or "")[:300])
+            )
+        except Exception as e:  # diagnostic only — never crash the run
+            results.append((label, None, {}, f"<probe request failed: {e}>"))
+    return results
 
 
 def permission_hint(folder_uid):
-    """How to read the probe output + the likely fixes."""
+    """How to read the GET-vs-POST comparison + the likely fixes."""
     folder_note = (
         f"GRAFANA_FOLDER_UID='{folder_uid}' is set — make sure that folder "
         "grants the service account Edit, or unset it to use General."
@@ -133,17 +148,17 @@ def permission_hint(folder_uid):
         else "GRAFANA_FOLDER_UID is unset (General folder)."
     )
     return (
-        "Write failed while read still works. grafana-client drops the response\n"
-        "headers, so a raw probe was sent too — read 'Probe [...] headers' below:\n"
-        "  * Headers contain 'x-grafana-version' + a JSON body  ->  Grafana itself\n"
-        "    is denying the write. Then check, in order: " + folder_note + ";\n"
-        "    a per-dashboard ACL on dashboards imported by hand earlier (delete\n"
-        "    them once so this job recreates them); or the token's role.\n"
-        "  * Headers show 'server'/'cf-ray'/'via'/'x-served-by' and the body is\n"
-        "    empty or HTML  ->  a REVERSE PROXY / WAF (e.g. Cloudflare in front\n"
-        "    of Grafana/Coolify) is blocking the POST. Fix: allowlist the GitHub\n"
-        "    Actions IP ranges, bypass the WAF for the API path, or point\n"
-        "    GRAFANA_URL at an origin that is not behind the WAF."
+        "Read works, write fails. Compare the GET and POST responses above:\n"
+        "  * GET has 'x-grafana-version' but POST does NOT  ->  the POST is\n"
+        "    answered by a REVERSE PROXY / WAF in front of Grafana, not by\n"
+        "    Grafana. Fix on the proxy: allowlist the GitHub Actions IPs,\n"
+        "    bypass the WAF for the API path, or point GRAFANA_URL at an\n"
+        "    origin not behind the WAF.\n"
+        "  * BOTH have 'x-grafana-version'  ->  Grafana itself is denying the\n"
+        "    write. Then check, in order: " + folder_note + "; a per-dashboard\n"
+        "    ACL on dashboards imported by hand earlier (delete them once so\n"
+        "    this job recreates them); and the token's actual role in\n"
+        "    Administration -> Users and access -> Service accounts."
     )
 
 
@@ -192,11 +207,11 @@ def main():
             failed += 1
             if not printed_probe:
                 printed_probe = True
-                code, headers, body = probe_write(grafana, payload)
                 print()
                 print(permission_hint(FOLDER_UID))
-                print(f"Probe [{code}] headers={headers}")
-                print(f"Probe body: {body!r}")
+                for label, code, headers, body in diagnose(grafana, payload):
+                    print(f"Probe {label} [{code}] headers={headers}")
+                    print(f"Probe {label} body: {body!r}")
             detail = e.response or e.message or "(empty response body)"
             print(f"FAIL  {f.name} [{e.status_code}] ({title}): {detail}")
             continue

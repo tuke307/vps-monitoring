@@ -60,9 +60,22 @@ def api(method, path, body=None):
     except urllib.error.HTTPError as e:
         raw = e.read().decode()
         try:
-            return e.code, json.loads(raw)
+            body = json.loads(raw) if raw else {}
         except json.JSONDecodeError:
-            return e.code, {"error": raw}
+            body = {"error": raw.strip() or "<empty body>"}
+        # Headers that disambiguate a Grafana 403 from one returned by a
+        # reverse proxy / WAF (the body alone is often an empty {}).
+        meta = {
+            k.lower(): v
+            for k, v in e.headers.items()
+            if k.lower() in (
+                "server", "x-grafana-version", "via",
+                "cf-ray", "x-cache", "x-powered-by",
+            )
+        }
+        if meta and isinstance(body, dict) and "_responseHeaders" not in body:
+            body["_responseHeaders"] = meta
+        return e.code, body
 
 
 def load_datasources():
@@ -73,6 +86,54 @@ def load_datasources():
         {"name": d.get("name", ""), "type": d.get("type", ""), "uid": d.get("uid", "")}
         for d in data
     ]
+
+
+def probe_token_role():
+    """Best-effort: report the org role this token authenticates as.
+
+    A read-OK / write-403 split almost always means a Viewer token, so naming
+    the role here shortens the debug. Returns None if Grafana won't tell us
+    (endpoint varies by version / token type) — never fatal.
+    """
+    status, data = api("GET", "/api/user")
+    if status == 200 and isinstance(data, dict):
+        role = data.get("orgRole")
+        login = data.get("login") or data.get("name")
+        if role:
+            return f"{login or 'token'} (orgRole={role})"
+    return None
+
+
+def permission_hint(folder_uid):
+    """Remediation for a 403 on POST /api/dashboards/db when read works."""
+    if folder_uid:
+        folder_note = (
+            "GRAFANA_FOLDER_UID='%s' — make sure that folder grants this "
+            "service account Edit, or unset it to write to General."
+            % folder_uid
+        )
+    else:
+        folder_note = (
+            "GRAFANA_FOLDER_UID is unset (= General folder), so the folder "
+            "is unlikely to be the blocker."
+        )
+    return (
+        "403 Forbidden on write, but read works. With an Editor token the "
+        "likely culprits, in order:\n"
+        f"  1. Folder permission: {folder_note}\n"
+        "  2. Per-dashboard ACL: if these dashboards already exist (imported "
+        "by hand earlier) they can carry permissions the service account "
+        "can't override even with overwrite=true. Delete them once so this "
+        "job recreates them, or reset their permissions.\n"
+        "  3. Provisioning conflict: if Grafana also loads these dashboards "
+        "from disk (provisioning/dashboards), the HTTP API can't modify them "
+        "- stop file-provisioning them.\n"
+        "  4. Role fallback: confirm the service-account role is Editor/Admin\n"
+        "     (Grafana Cloud/Enterprise RBAC also needs 'dashboards:write').\n"
+        "  5. If the headers/body below are empty or show no X-Grafana-Version\n"
+        "     (Server/CF-Ray/Via instead), a WAF/reverse proxy in front of\n"
+        "     Grafana is blocking the POST."
+    )
 
 
 def resolve_placeholder(name, datasources):
@@ -118,12 +179,16 @@ def main():
         "Datasources: "
         + ", ".join(f"{d['name']}({d['type']})={d['uid']}" for d in datasources)
     )
+    role = probe_token_role()
+    if role:
+        print(f"Authenticated as: {role}")
 
     files = sorted(DASH_DIR.glob("*.json"))
     if not files:
         sys.exit(f"FATAL: no dashboards found in {DASH_DIR}")
 
     pushed = skipped = failed = 0
+    shown_403_hint = False
     for f in files:
         dash = json.loads(f.read_text())
         uid = dash.get("uid")
@@ -155,7 +220,16 @@ def main():
             print(f"OK    {f.name} -> uid={uid} ({title}) v{resp.get('version')}")
         else:
             failed += 1
-            print(f"FAIL  {f.name} [{status}] ({title}): {resp}")
+            if status == 403 and not shown_403_hint:
+                shown_403_hint = True
+                print()
+                print(permission_hint(FOLDER_UID))
+            detail = resp.get("message") if isinstance(resp, dict) else None
+            if not detail:
+                # Drop the helper key; show the real body (or flag emptiness).
+                detail = {k: v for k, v in resp.items()} if isinstance(resp, dict) else resp
+                detail = detail or "(empty response body - likely a proxy, not Grafana)"
+            print(f"FAIL  {f.name} [{status}] ({title}): {detail}")
 
     print(f"\nSummary: {pushed} pushed, {skipped} skipped, {failed} failed")
     if failed:

@@ -113,18 +113,24 @@ def diagnose(grafana, payload):
     """Run targeted probes to locate the 403.
 
     The reverse proxy strips X-Grafana-Version from every response, so header
-    presence alone can't separate a Grafana 403 from a proxy one. These three
-    controls can:
-      * GET  /api/user        -> the token's orgRole (is it really Editor?).
-      * POST /api/health      -> control: Grafana never answers this with a
-                                 bare '403 {}'. If it does, a proxy/WAF is
-                                 blocking POST requests before Grafana.
-      * POST /api/dashboards/db -> the actual failing write.
+    presence can't separate a Grafana 403 from a proxy one. These four probes
+    isolate method vs. body-content vs. Grafana, all side-effect-free:
+      * GET  /api/user                 -> the token's orgRole (Editor?).
+      * POST /api/health (no body)     -> method control. Grafana never 403s
+                                          this with '{}'; if it does, the proxy
+                                          blocks POST outright.
+      * POST /api/health (dash body)   -> body-content control. If this 403s
+                                          but the no-body one doesn't, a WAF is
+                                          flagging the dashboard JSON (LogQL /
+                                          regex like {..} / [5m]) in the body.
+      * POST /api/dashboards/db        -> the actual failing write.
     """
     probes = (
         ("GET  /api/user", "GET", "/api/user", {}),
-        ("POST /api/health", "POST", "/api/health", {}),
-        ("POST /api/dashboards/db", "POST", "/api/dashboards/db",
+        ("POST /api/health [no body]", "POST", "/api/health", {}),
+        ("POST /api/health [dash body]", "POST", "/api/health",
+         {"json": payload}),
+        ("POST /api/dashboards/db [dash body]", "POST", "/api/dashboards/db",
          {"json": payload}),
     )
     results = []

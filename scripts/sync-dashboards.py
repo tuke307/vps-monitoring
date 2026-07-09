@@ -110,19 +110,25 @@ def transform(dash, datasources):
 
 
 def diagnose(grafana, payload):
-    """Capture full response headers for a known-good GET and the failing POST.
+    """Run targeted probes to locate the 403.
 
-    grafana-client raises on HTTP errors but discards the response headers.
-    Those headers are the clue: Grafana always sends 'x-grafana-version', so
-    if the GET has it but the POST does not, the POST is being answered by a
-    reverse proxy / WAF in front of Grafana, not by Grafana itself.
+    The reverse proxy strips X-Grafana-Version from every response, so header
+    presence alone can't separate a Grafana 403 from a proxy one. These three
+    controls can:
+      * GET  /api/user        -> the token's orgRole (is it really Editor?).
+      * POST /api/health      -> control: Grafana never answers this with a
+                                 bare '403 {}'. If it does, a proxy/WAF is
+                                 blocking POST requests before Grafana.
+      * POST /api/dashboards/db -> the actual failing write.
     """
-    results = []
-    for label, method, url, kwargs in (
-        ("GET  /api/datasources", "GET", "/api/datasources", {}),
+    probes = (
+        ("GET  /api/user", "GET", "/api/user", {}),
+        ("POST /api/health", "POST", "/api/health", {}),
         ("POST /api/dashboards/db", "POST", "/api/dashboards/db",
          {"json": payload}),
-    ):
+    )
+    results = []
+    for label, method, url, kwargs in probes:
         try:
             resp = grafana.client.s.request(
                 method,
@@ -140,7 +146,7 @@ def diagnose(grafana, payload):
 
 
 def permission_hint(folder_uid):
-    """How to read the GET-vs-POST comparison + the likely fixes."""
+    """How to read the probe output + the likely fixes."""
     folder_note = (
         f"GRAFANA_FOLDER_UID='{folder_uid}' is set — make sure that folder "
         "grants the service account Edit, or unset it to use General."
@@ -148,17 +154,21 @@ def permission_hint(folder_uid):
         else "GRAFANA_FOLDER_UID is unset (General folder)."
     )
     return (
-        "Read works, write fails. Compare the GET and POST responses above:\n"
-        "  * GET has 'x-grafana-version' but POST does NOT  ->  the POST is\n"
-        "    answered by a REVERSE PROXY / WAF in front of Grafana, not by\n"
-        "    Grafana. Fix on the proxy: allowlist the GitHub Actions IPs,\n"
-        "    bypass the WAF for the API path, or point GRAFANA_URL at an\n"
-        "    origin not behind the WAF.\n"
-        "  * BOTH have 'x-grafana-version'  ->  Grafana itself is denying the\n"
-        "    write. Then check, in order: " + folder_note + "; a per-dashboard\n"
+        "Read the three probes above to locate the 403:\n"
+        "  * GET /api/user body shows orgRole  ->  if it's Viewer, the token\n"
+        "    is NOT Editor (recreate it as Editor / check the org).\n"
+        "  * POST /api/health  ->  control. Grafana never answers this with a\n"
+        "    bare '403 {}'. If it DOES (same as the dashboard POST), a REVERSE\n"
+        "    PROXY / WAF in front of Grafana is blocking POST requests (the\n"
+        "    'alt-svc: h3' header points at your Coolify Caddy layer). Fix it\n"
+        "    there: check the service's proxy config for a deny/block/rate-limit\n"
+        "    on POST, allowlist the GitHub Actions IPs, or point GRAFANA_URL at\n"
+        "    an origin not behind the proxy.\n"
+        "  * POST /api/health is NOT 403 (e.g. 404/405/200 with a body)  ->\n"
+        "    POSTs DO reach Grafana, so the dashboard 403 is Grafana denying\n"
+        "    the write. Then check, in order: " + folder_note + "; a per-dashboard\n"
         "    ACL on dashboards imported by hand earlier (delete them once so\n"
-        "    this job recreates them); and the token's actual role in\n"
-        "    Administration -> Users and access -> Service accounts."
+        "    this job recreates them); and the token's actual role."
     )
 
 
@@ -210,8 +220,9 @@ def main():
                 print()
                 print(permission_hint(FOLDER_UID))
                 for label, code, headers, body in diagnose(grafana, payload):
-                    print(f"Probe {label} [{code}] headers={headers}")
-                    print(f"Probe {label} body: {body!r}")
+                    print(f"Probe {label} [{code}] body={body!r}")
+                    if label.startswith("POST /api/dashboards"):
+                        print(f"Probe {label} headers={headers}")
             detail = e.response or e.message or "(empty response body)"
             print(f"FAIL  {f.name} [{e.status_code}] ({title}): {detail}")
             continue

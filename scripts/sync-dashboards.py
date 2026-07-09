@@ -152,7 +152,7 @@ def diagnose(grafana, payload):
 
 
 def permission_hint(folder_uid):
-    """How to read the probe output + the likely fixes."""
+    """How to read the 4-probe matrix + the likely fixes."""
     folder_note = (
         f"GRAFANA_FOLDER_UID='{folder_uid}' is set — make sure that folder "
         "grants the service account Edit, or unset it to use General."
@@ -160,18 +160,19 @@ def permission_hint(folder_uid):
         else "GRAFANA_FOLDER_UID is unset (General folder)."
     )
     return (
-        "Read the three probes above to locate the 403:\n"
-        "  * GET /api/user body shows orgRole  ->  if it's Viewer, the token\n"
-        "    is NOT Editor (recreate it as Editor / check the org).\n"
-        "  * POST /api/health  ->  control. Grafana never answers this with a\n"
-        "    bare '403 {}'. If it DOES (same as the dashboard POST), a REVERSE\n"
-        "    PROXY / WAF in front of Grafana is blocking POST requests (the\n"
-        "    'alt-svc: h3' header points at your Coolify Caddy layer). Fix it\n"
-        "    there: check the service's proxy config for a deny/block/rate-limit\n"
-        "    on POST, allowlist the GitHub Actions IPs, or point GRAFANA_URL at\n"
-        "    an origin not behind the proxy.\n"
-        "  * POST /api/health is NOT 403 (e.g. 404/405/200 with a body)  ->\n"
-        "    POSTs DO reach Grafana, so the dashboard 403 is Grafana denying\n"
+        "Read the four probes above to locate the 403 (Grafana never returns a\n"
+        "bare '{}' 4xx — an empty body means the response is NOT from Grafana):\n"
+        "  * GET /api/user body shows orgRole  ->  if Viewer, the token is NOT\n"
+        "    Editor (recreate it as Editor; check the org).\n"
+        "  * POST /api/health [no body] = 403 {}  ->  a REVERSE PROXY / WAF\n"
+        "    blocks POST requests outright (the 'alt-svc: h3' header points at\n"
+        "    your Coolify Caddy layer). Fix the proxy config.\n"
+        "  * POST /api/health [no body] != 403 BUT [dash body] = 403 {}  ->  a\n"
+        "    WAF is flagging the dashboard JSON body (LogQL/regex like {..} or\n"
+        "    [5m]). Bypass/disable that WAF rule for the API path, or point\n"
+        "    GRAFANA_URL at an origin not behind the WAF.\n"
+        "  * BOTH /api/health probes are NOT 403 (e.g. 404/405/200 with a body)\n"
+        "    ->  POSTs reach Grafana, so the dashboard 403 is Grafana denying\n"
         "    the write. Then check, in order: " + folder_note + "; a per-dashboard\n"
         "    ACL on dashboards imported by hand earlier (delete them once so\n"
         "    this job recreates them); and the token's actual role."

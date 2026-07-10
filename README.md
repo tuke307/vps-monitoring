@@ -162,13 +162,15 @@ select the Loki datasource.
 A GitHub Actions workflow (`.github/workflows/sync-grafana-dashboards.yml`) pushes every
 `dashboards/*.json` to Grafana automatically on push to `main`, so you never import by hand.
 It strips the manual-import wrappers and resolves the `${DS_LOKI}` / `${DS_PROMETHEUS}`
-placeholders to your real datasource UIDs (`scripts/sync-dashboards.py`, stdlib-only).
-Dashboards with an unresolved placeholder or no stable `uid` are skipped, never overwritten.
+placeholders to your real datasource UIDs (`scripts/sync-dashboards.py`, using the
+`grafana-client` package via `uv`). Dashboards with an unresolved placeholder or no stable
+`uid` are skipped, never overwritten.
 
 One-time setup:
 
 1. In Grafana: **Administration → Users and access → Service accounts → Add service account**
-   (role **Editor**) → **Add service account token**. Copy the token.
+   (role **Admin**, or Editor with the `dashboards:write` permission) → **Add service account
+   token**. Copy the token.
 2. In the GitHub repo **Settings → Secrets and variables → Actions**:
    - **Variables** (*New repository variable*): `GRAFANA_URL` (e.g. `https://grafana.yourdomain.com`)
      and, optionally, `GRAFANA_FOLDER_UID` (folder UID; default: General)

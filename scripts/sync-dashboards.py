@@ -144,39 +144,44 @@ def diagnose(grafana, payload):
                 **kwargs,
             )
             results.append(
-                (label, resp.status_code, dict(resp.headers), (resp.text or "")[:300])
+                (label, resp.status_code, dict(resp.headers), resp.text or "")
             )
         except Exception as e:  # diagnostic only — never crash the run
             results.append((label, None, {}, f"<probe request failed: {e}>"))
     return results
 
 
-def permission_hint(folder_uid):
-    """How to read the 4-probe matrix + the likely fixes."""
-    folder_note = (
-        f"GRAFANA_FOLDER_UID='{folder_uid}' is set — make sure that folder "
-        "grants the service account Edit, or unset it to use General."
-        if folder_uid
-        else "GRAFANA_FOLDER_UID is unset (General folder)."
-    )
-    return (
-        "Read the four probes above to locate the 403 (Grafana never returns a\n"
-        "bare '{}' 4xx — an empty body means the response is NOT from Grafana):\n"
-        "  * GET /api/user body shows orgRole  ->  if Viewer, the token is NOT\n"
-        "    Editor (recreate it as Editor; check the org).\n"
-        "  * POST /api/health [no body] = 403 {}  ->  a REVERSE PROXY / WAF\n"
-        "    blocks POST requests outright (the 'alt-svc: h3' header points at\n"
-        "    your Coolify Caddy layer). Fix the proxy config.\n"
-        "  * POST /api/health [no body] != 403 BUT [dash body] = 403 {}  ->  a\n"
-        "    WAF is flagging the dashboard JSON body (LogQL/regex like {..} or\n"
-        "    [5m]). Bypass/disable that WAF rule for the API path, or point\n"
-        "    GRAFANA_URL at an origin not behind the WAF.\n"
-        "  * BOTH /api/health probes are NOT 403 (e.g. 404/405/200 with a body)\n"
-        "    ->  POSTs reach Grafana, so the dashboard 403 is Grafana denying\n"
-        "    the write. Then check, in order: " + folder_note + "; a per-dashboard\n"
-        "    ACL on dashboards imported by hand earlier (delete them once so\n"
-        "    this job recreates them); and the token's actual role."
-    )
+def verdict(results):
+    """Interpret the probe status codes and name the decisive next test.
+
+    Grafana's own dashboard-permission 403 normally carries a body like
+    {"message":"Access denied to save dashboard"}; a bare '{}' is atypical and
+    can mean either an RBAC denial or a proxy/WAF intercept — so rather than
+    guess, point at the one test that separates them.
+    """
+    code = {label: c for label, c, _, _ in results}
+    health_no = code.get("POST /api/health [no body]")
+    health_body = code.get("POST /api/health [dash body]")
+    dash = code.get("POST /api/dashboards/db [dash body]")
+
+    if health_no == 403 or health_body == 403:
+        return (
+            "VERDICT: a proxy/WAF blocks POST requests (a /api/health POST also "
+            "403s). Fix the Coolify Caddy / WAF layer."
+        )
+    if health_body not in (None, 403) and dash == 403:
+        return (
+            "VERDICT: only POST /api/dashboards/db returns 403 {} — a POST "
+            "carrying the SAME dashboard body to /api/health reached Grafana. "
+            "The empty '{}' (no Grafana 'message') means it's either an RBAC "
+            "denial of dashboards:write OR a proxy/WAF rule on this path.\n"
+            "DECISIVE TEST: retry with an Admin-role service-account token.\n"
+            "  - Admin SUCCEEDS  => the account lacks dashboards:write; fix its "
+            "role/permissions (Editor + dashboards:write, or Admin).\n"
+            "  - Admin ALSO 403s => it's the proxy/WAF; fix the Coolify Caddy / "
+            "WAF rule targeting /api/dashboards/db."
+        )
+    return "VERDICT: see the probes below to locate the 403."
 
 
 def main():
@@ -224,12 +229,14 @@ def main():
             failed += 1
             if not printed_probe:
                 printed_probe = True
+                probes = diagnose(grafana, payload)
                 print()
-                print(permission_hint(FOLDER_UID))
-                for label, code, headers, body in diagnose(grafana, payload):
-                    print(f"Probe {label} [{code}] body={body!r}")
+                print(verdict(probes))
+                for label, c, headers, body in probes:
+                    shown = body if len(body) <= 200 else body[:200] + f"…(+{len(body) - 200}b)"
+                    print(f"Probe {label} [{c}] body={shown!r}")
                     if label.startswith("POST /api/dashboards"):
-                        print(f"Probe {label} headers={headers}")
+                        print(f"  headers={headers}")
             detail = e.response or e.message or "(empty response body)"
             print(f"FAIL  {f.name} [{e.status_code}] ({title}): {detail}")
             continue

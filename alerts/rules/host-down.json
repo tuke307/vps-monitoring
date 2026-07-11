@@ -1,51 +1,77 @@
 {
-  "uid": "vps-host-down",
+  "uid": "cfpu848h4wvlse",
   "orgID": 1,
-  "ruleGroup": "vps-host-health",
+  "folderUID": "ffpu7r52zqmm8c",
+  "ruleGroup": "vps-host",
   "title": "Host down",
-  "condition": "B",
+  "condition": "C",
   "data": [
     {
       "refId": "A",
       "queryType": "",
-      "relativeTimeRange": { "from": 600, "to": 0 },
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
       "datasourceUid": "${DS_PROMETHEUS}",
       "model": {
+        "editorMode": "code",
         "expr": "up{job=\"node_exporter\"}",
         "instant": true,
-        "refId": "A",
-        "hide": false
+        "intervalMs": 1000,
+        "legendFormat": "__auto",
+        "maxDataPoints": 43200,
+        "range": false,
+        "refId": "A"
       }
     },
     {
-      "refId": "B",
-      "queryType": "",
-      "relativeTimeRange": { "from": 0, "to": 0 },
-      "datasourceUid": "-100",
+      "refId": "C",
+      "queryType": "expression",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
       "model": {
-        "type": "classic_conditions",
-        "datasource": { "type": "__expr__", "uid": "-100" },
-        "refId": "B",
-        "hide": false,
         "conditions": [
           {
-            "type": "query",
-            "operator": { "type": "and" },
-            "query": { "params": ["A"] },
-            "reducer": { "type": "last", "params": [] },
-            "evaluator": { "type": "lt", "params": [1] }
+            "evaluator": {
+              "params": [
+                1
+              ],
+              "type": "lt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "C"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "last"
+            },
+            "type": "query"
           }
-        ]
+        ],
+        "datasource": {
+          "type": "__expr__",
+          "uid": "__expr__"
+        },
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "C",
+        "type": "threshold"
       }
     }
   ],
   "noDataState": "Alerting",
   "execErrState": "Error",
   "for": "2m",
-  "annotations": {
-    "summary": "Host {{ $labels.instance }} is down",
-    "description": "node-exporter on {{ $labels.instance }} has been unreachable for at least 2m (up < 1, or no data at all)."
-  },
-  "labels": { "severity": "critical" },
+  "keep_firing_for": "0s",
   "isPaused": false
 }

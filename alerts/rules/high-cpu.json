@@ -1,51 +1,77 @@
 {
-  "uid": "vps-high-cpu",
+  "uid": "afpu8bxubirr4d",
   "orgID": 1,
-  "ruleGroup": "vps-host-health",
+  "folderUID": "ffpu7r52zqmm8c",
+  "ruleGroup": "vps-host",
   "title": "High CPU",
-  "condition": "B",
+  "condition": "C",
   "data": [
     {
       "refId": "A",
       "queryType": "",
-      "relativeTimeRange": { "from": 600, "to": 0 },
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
       "datasourceUid": "${DS_PROMETHEUS}",
       "model": {
+        "editorMode": "builder",
         "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{job=\"node_exporter\",mode=\"idle\"}[5m])))",
         "instant": true,
-        "refId": "A",
-        "hide": false
+        "intervalMs": 1000,
+        "legendFormat": "__auto",
+        "maxDataPoints": 43200,
+        "range": false,
+        "refId": "A"
       }
     },
     {
-      "refId": "B",
-      "queryType": "",
-      "relativeTimeRange": { "from": 0, "to": 0 },
-      "datasourceUid": "-100",
+      "refId": "C",
+      "queryType": "expression",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
       "model": {
-        "type": "classic_conditions",
-        "datasource": { "type": "__expr__", "uid": "-100" },
-        "refId": "B",
-        "hide": false,
         "conditions": [
           {
-            "type": "query",
-            "operator": { "type": "and" },
-            "query": { "params": ["A"] },
-            "reducer": { "type": "last", "params": [] },
-            "evaluator": { "type": "gt", "params": [85] }
+            "evaluator": {
+              "params": [
+                85
+              ],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "C"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "last"
+            },
+            "type": "query"
           }
-        ]
+        ],
+        "datasource": {
+          "type": "__expr__",
+          "uid": "__expr__"
+        },
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "C",
+        "type": "threshold"
       }
     }
   ],
   "noDataState": "NoData",
   "execErrState": "Error",
   "for": "10m",
-  "annotations": {
-    "summary": "High CPU on {{ $labels.instance }}",
-    "description": "CPU usage on {{ $labels.instance }} is above 85% for 10m."
-  },
-  "labels": { "severity": "warning" },
+  "keep_firing_for": "0s",
   "isPaused": false
 }

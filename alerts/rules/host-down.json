@@ -1,0 +1,51 @@
+{
+  "uid": "vps-host-down",
+  "orgID": 1,
+  "ruleGroup": "vps-host-health",
+  "title": "Host down",
+  "condition": "B",
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": { "from": 600, "to": 0 },
+      "datasourceUid": "${DS_PROMETHEUS}",
+      "model": {
+        "expr": "up{job=\"node_exporter\"}",
+        "instant": true,
+        "refId": "A",
+        "hide": false
+      }
+    },
+    {
+      "refId": "B",
+      "queryType": "",
+      "relativeTimeRange": { "from": 0, "to": 0 },
+      "datasourceUid": "-100",
+      "model": {
+        "type": "classic_conditions",
+        "datasource": { "type": "__expr__", "uid": "-100" },
+        "refId": "B",
+        "hide": false,
+        "conditions": [
+          {
+            "type": "query",
+            "operator": { "type": "and" },
+            "query": { "params": ["A"] },
+            "reducer": { "type": "last", "params": [] },
+            "evaluator": { "type": "lt", "params": [1] }
+          }
+        ]
+      }
+    }
+  ],
+  "noDataState": "Alerting",
+  "execErrState": "Error",
+  "for": "2m",
+  "annotations": {
+    "summary": "Host {{ $labels.instance }} is down",
+    "description": "node-exporter on {{ $labels.instance }} has been unreachable for at least 2m (up < 1, or no data at all)."
+  },
+  "labels": { "severity": "critical" },
+  "isPaused": false
+}

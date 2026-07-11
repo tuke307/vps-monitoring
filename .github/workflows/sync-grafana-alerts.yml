@@ -1,0 +1,48 @@
+name: Sync Grafana Alerts
+
+# On push to main that touches an alert (or this tooling), upsert the alert
+# rules, contact points, and notification policy under alerts/ into Grafana via
+# the alerting provisioning HTTP API -- no manual "New alert rule" in the UI.
+# Also runnable manually from the Actions tab.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "alerts/**"
+      - "scripts/sync-alerts.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/sync-grafana-alerts.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# Avoid two syncs racing if several pushes land close together.
+concurrency:
+  group: grafana-alert-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies (from lockfile)
+        run: uv sync --frozen --no-dev
+
+      - name: Sync alerts to Grafana
+        env:
+          # Non-sensitive config -> repo Variables; token -> repo Secret
+          GRAFANA_URL: ${{ vars.GRAFANA_URL }}
+          GRAFANA_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GRAFANA_SERVICE_ACCOUNT_TOKEN }}
+          GRAFANA_FOLDER_UID: ${{ vars.GRAFANA_FOLDER_UID }}
+          ALERT_EMAIL_TO: ${{ vars.ALERT_EMAIL_TO }}
+        run: uv run python scripts/sync-alerts.py

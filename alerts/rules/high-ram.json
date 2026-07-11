@@ -1,0 +1,51 @@
+{
+  "uid": "vps-high-ram",
+  "orgID": 1,
+  "ruleGroup": "vps-host-health",
+  "title": "High RAM",
+  "condition": "B",
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": { "from": 600, "to": 0 },
+      "datasourceUid": "${DS_PROMETHEUS}",
+      "model": {
+        "expr": "100 * (1 - (node_memory_MemAvailable_bytes{job=\"node_exporter\"} / node_memory_MemTotal_bytes{job=\"node_exporter\"}))",
+        "instant": true,
+        "refId": "A",
+        "hide": false
+      }
+    },
+    {
+      "refId": "B",
+      "queryType": "",
+      "relativeTimeRange": { "from": 0, "to": 0 },
+      "datasourceUid": "-100",
+      "model": {
+        "type": "classic_conditions",
+        "datasource": { "type": "__expr__", "uid": "-100" },
+        "refId": "B",
+        "hide": false,
+        "conditions": [
+          {
+            "type": "query",
+            "operator": { "type": "and" },
+            "query": { "params": ["A"] },
+            "reducer": { "type": "last", "params": [] },
+            "evaluator": { "type": "gt", "params": [90] }
+          }
+        ]
+      }
+    }
+  ],
+  "noDataState": "NoData",
+  "execErrState": "Error",
+  "for": "5m",
+  "annotations": {
+    "summary": "High RAM on {{ $labels.instance }}",
+    "description": "Memory usage on {{ $labels.instance }} is above 90% for 5m."
+  },
+  "labels": { "severity": "warning" },
+  "isPaused": false
+}

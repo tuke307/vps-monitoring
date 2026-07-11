@@ -1,0 +1,51 @@
+{
+  "uid": "vps-high-cpu",
+  "orgID": 1,
+  "ruleGroup": "vps-host-health",
+  "title": "High CPU",
+  "condition": "B",
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": { "from": 600, "to": 0 },
+      "datasourceUid": "${DS_PROMETHEUS}",
+      "model": {
+        "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{job=\"node_exporter\",mode=\"idle\"}[5m])))",
+        "instant": true,
+        "refId": "A",
+        "hide": false
+      }
+    },
+    {
+      "refId": "B",
+      "queryType": "",
+      "relativeTimeRange": { "from": 0, "to": 0 },
+      "datasourceUid": "-100",
+      "model": {
+        "type": "classic_conditions",
+        "datasource": { "type": "__expr__", "uid": "-100" },
+        "refId": "B",
+        "hide": false,
+        "conditions": [
+          {
+            "type": "query",
+            "operator": { "type": "and" },
+            "query": { "params": ["A"] },
+            "reducer": { "type": "last", "params": [] },
+            "evaluator": { "type": "gt", "params": [85] }
+          }
+        ]
+      }
+    }
+  ],
+  "noDataState": "NoData",
+  "execErrState": "Error",
+  "for": "10m",
+  "annotations": {
+    "summary": "High CPU on {{ $labels.instance }}",
+    "description": "CPU usage on {{ $labels.instance }} is above 85% for 10m."
+  },
+  "labels": { "severity": "warning" },
+  "isPaused": false
+}

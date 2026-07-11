@@ -1,7 +1,7 @@
 [project]
 name = "vps-monitoring"
 version = "0.1.0"
-description = "VPS monitoring stack — Grafana dashboard sync tooling (scripts/sync-dashboards.py)"
+description = "VPS monitoring stack — Grafana dashboard + alerting sync tooling (scripts/sync-*.py)"
 requires-python = ">=3.11"
 dependencies = [
     "grafana-client>=5.1.0",

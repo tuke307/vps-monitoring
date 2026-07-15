@@ -1,9 +1,9 @@
 name: Sync Grafana Alerts
 
-# On push to main that touches an alert (or this tooling), upsert the alert
-# rules, contact points, and notification policy under alerts/ into Grafana via
-# the alerting provisioning HTTP API -- no manual "New alert rule" in the UI.
-# Also runnable manually from the Actions tab.
+# On push to main that touches an alert (or this tooling), upsert the alert rules
+# under alerts/rules/ into Grafana via the alerting provisioning HTTP API -- no
+# manual "New alert rule" in the UI. Contact points and the notification policy
+# stay in the Grafana UI; only rules are synced. Also runnable manually.
 
 on:
   push:
@@ -44,5 +44,4 @@ jobs:
           GRAFANA_URL: ${{ vars.GRAFANA_URL }}
           GRAFANA_SERVICE_ACCOUNT_TOKEN: ${{ secrets.GRAFANA_SERVICE_ACCOUNT_TOKEN }}
           GRAFANA_FOLDER_UID: ${{ vars.GRAFANA_FOLDER_UID }}
-          ALERT_EMAIL_TO: ${{ vars.ALERT_EMAIL_TO }}
         run: uv run python scripts/sync-alerts.py

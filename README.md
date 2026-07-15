@@ -187,9 +187,9 @@ datasource UID; rules are upserted by `uid` and marked read-only in the UI (git 
 truth). Like dashboards, the sync is upsert-only (no deletes). Full details:
 **[Alerting Guide](docs/ALERTS.md)**.
 
-The contact point and notification policy are synced **only if you set `ALERT_EMAIL_TO`**
-(greenfield). If you already have a contact point in Grafana, leave it unset — the workflow
-manages rules only and routes them through your existing default policy.
+The workflow manages **rules only**. Contact points and the notification policy stay in the
+Grafana UI (e.g. your existing email contact point + default policy) — the synced rules route
+through your default policy.
 
 One-time setup (in addition to the dashboard secret/variables above):
 
@@ -197,15 +197,13 @@ One-time setup (in addition to the dashboard secret/variables above):
    `alert.rules:write` (the dashboard `dashboards:write` scope is not enough — every push
    returns 403). Re-issue the token if you widened the role.
 2. In the GitHub repo **Settings → Secrets and variables → Actions**, ensure `GRAFANA_FOLDER_UID`
-   is set to a **real** Grafana folder UID (alert rules cannot live in General). Optionally add
-   `ALERT_EMAIL_TO` (comma-separated inboxes) **only** if you want CI to also create the email
-   contact point — otherwise skip it to reuse your existing contact point.
+   is set to a **real** Grafana folder UID (alert rules cannot live in General).
 3. Enable SMTP on the Grafana resource (see [docs/ALERTS.md](docs/ALERTS.md)) so emails send.
-4. Push to `alerts/` (or run it manually: **Actions → Sync Grafana Alerts → Run workflow**).
+4. Push to `alerts/rules/` (or run it manually: **Actions → Sync Grafana Alerts → Run workflow**).
 
 > Already have alert rules in the Grafana UI? Adopt them into git with
-> `scripts/export-alerts.py` first (see [docs/ALERTS.md](docs/ALERTS.md) §4) — otherwise the
-> push creates duplicate rules and you get double alerts.
+> `scripts/export-alerts.py` first (see [docs/ALERTS.md](docs/ALERTS.md)) — otherwise the push
+> creates duplicate rules and you get double alerts.
 
 > Note: `db-migrate` containers run once and exit (`restart: 'no'`) and Promtail only
 > tails `running` containers, so their logs are not captured. That is expected.

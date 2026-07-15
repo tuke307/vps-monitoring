@@ -1,9 +1,0 @@
-[
-  {
-    "uid": "email",
-    "name": "email",
-    "type": "email",
-    "settings": { "addresses": "${ALERT_EMAIL_TO}" },
-    "disableResolvedMessage": false
-  }
-]

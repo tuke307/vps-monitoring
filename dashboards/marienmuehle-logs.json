@@ -12,7 +12,7 @@
       }
     ]
   },
-  "description": "Logs dashboard for Marienmuehle services (API, Web, Email Worker). Scoped by the `project` label to exclude kds containers.",
+  "description": "Logs dashboard for Marienmuehle services (API, Web, Email Worker, MCP Server). Scoped by the `project` label to exclude kds containers.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -199,6 +199,32 @@
     {
       "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
       "gridPos": { "h": 10, "w": 24, "x": 0, "y": 46 },
+      "id": 7,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "{project=\"marienmuehle\", service=\"mcp-server\"} | json | __error__=\"\" | line_format \"[{{.level}}] {{.message}}\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "MCP Server Logs (JSON Parsed)",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 56 },
       "id": 6,
       "options": {
         "dedupStrategy": "none",
@@ -232,7 +258,7 @@
   "timezone": "browser",
   "title": "Marienmuehle Logs",
   "uid": "marienmuehle-logs",
-  "version": 3,
+  "version": 4,
   "weekStart": "",
   "__inputs": [
     {

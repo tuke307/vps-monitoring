@@ -138,7 +138,9 @@ Instead, Promtail derives two stable labels from the **image** name:
 | `ghcr.io/tuke307/kds-api:latest`        | `kds`         | `api`          |
 | `ghcr.io/tuke307/kds-web:latest`        | `kds`         | `web`          |
 | `ghcr.io/tuke307/kds-email-worker`      | `kds`         | `email-worker` |
+| `ghcr.io/tuke307/kds-mcp-server`        | `kds`         | `mcp-server`   |
 | `ghcr.io/tuke307/marienmuehle-api`      | `marienmuehle`| `api`          |
+| `ghcr.io/tuke307/marienmuehle-mcp-server` | `marienmuehle`| `mcp-server` |
 | `ghcr.io/tuke307/tonyluke-web`          | `tonyluke`    | `web`          |
 
 All dashboards query by these labels, so kds, marienmuehle, and tonyluke never cross-contaminate.
@@ -147,8 +149,8 @@ All dashboards query by these labels, so kds, marienmuehle, and tonyluke never c
 
 | File                          | Scope                                  |
 |-------------------------------|----------------------------------------|
-| `dashboards/kds-logs.json`        | KDS API / Web / Email-worker           |
-| `dashboards/marienmuehle-logs.json`| Marienmuehle API / Web / Email-worker  |
+| `dashboards/kds-logs.json`        | KDS API / Web / Email-worker / MCP server |
+| `dashboards/marienmuehle-logs.json`| Marienmuehle API / Web / Email-worker / MCP server |
 | `dashboards/tonyluke-logs.json`    | Tony Luke Portfolio (web)              |
 | `dashboards/application-overview.json`        | All projects, with `$project`/`$service` filters |
 | `dashboards/container-metrics.json`| cAdvisor container metrics             |

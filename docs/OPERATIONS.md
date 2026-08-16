@@ -28,7 +28,7 @@ Each application service carries Docker labels in its own `compose.yml`:
 ```yaml
 labels:
   - 'app.project=kds'
-  - 'app.service=api'   # api | web | email-worker
+  - 'app.service=api'   # api | web | email-worker | mcp-server
 ```
 
 Alloy's `config/alloy/config.alloy` reads them via `discovery.relabel`:

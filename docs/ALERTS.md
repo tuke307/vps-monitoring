@@ -75,7 +75,7 @@ node-exporter is scraped (see `docker-compose.yml`).
 | **High RAM** (`high-ram.json`) | `100 * (1 - (node_memory_MemAvailable_bytes{job="node_exporter"} / node_memory_MemTotal_bytes{job="node_exporter"}))` | `> 90` | `5m` |
 | **Low disk (/)** (`low-disk.json`) | `100 * (1 - (node_filesystem_avail_bytes{job="node_exporter",mountpoint="/"} / node_filesystem_size_bytes{job="node_exporter",mountpoint="/"}))` | `> 85` | `10m` |
 | **High load** (`high-load.json`) | `node_load1{job="node_exporter"}` | `> 4` | `5m` |
-| **Disk fills within 24h** (`disk-fills-within-24h.json`) | `predict_linear(node_filesystem_avail_bytes{job="node_exporter",mountpoint="/"}[1h], 24 * 3600)` | `< 0` | `5m` |
+| **Disk fills within 24h** (`disk-fills-within-24h.json`) | Aggregated `predict_linear` for `/`, guarded by free space `< 20%` | `< 0` | `30m` |
 
 Tuning notes:
 
@@ -83,8 +83,9 @@ Tuning notes:
   not just `up == 0`.
 - **High load**: tune the `4` threshold to your CPU core count — load equal to core count is
   saturation. Check cores with `nproc` on the VPS.
-- **Disk fills within 24h**: linearly extrapolates the last hour of available bytes; fires before
-  you actually run out. Drop the rule if it's too noisy.
+- **Disk fills within 24h**: linearly extrapolates the last six hours of available bytes and
+  aggregates filesystem label variants per host, so duplicate root-mount series do not create
+  duplicate notifications. It fires before you actually run out. Drop the rule if it's too noisy.
 
 To change a rule, edit the file in `alerts/rules/` and push — the workflow syncs it. The
 `${DS_PROMETHEUS}` placeholder is resolved to your Prometheus datasource UID at sync time, so the

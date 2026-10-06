@@ -16,7 +16,7 @@
       "datasourceUid": "${DS_PROMETHEUS}",
       "model": {
         "editorMode": "code",
-        "expr": "predict_linear(node_filesystem_avail_bytes{job=\"node_exporter\",mountpoint=\"/\",fstype!~\"tmpfs|overlay|squashfs\"}[6h], 24 * 3600) and (node_filesystem_avail_bytes{job=\"node_exporter\",mountpoint=\"/\",fstype!~\"tmpfs|overlay|squashfs\"} / node_filesystem_size_bytes{job=\"node_exporter\",mountpoint=\"/\",fstype!~\"tmpfs|overlay|squashfs\"}) < 0.20",
+        "expr": "min by (instance, mountpoint) (predict_linear(node_filesystem_avail_bytes{job=\"node_exporter\",mountpoint=\"/\",fstype!~\"tmpfs|overlay|squashfs\"}[6h], 24 * 3600)) and on (instance, mountpoint) (min by (instance, mountpoint) (node_filesystem_avail_bytes{job=\"node_exporter\",mountpoint=\"/\",fstype!~\"tmpfs|overlay|squashfs\"} / node_filesystem_size_bytes{job=\"node_exporter\",mountpoint=\"/\",fstype!~\"tmpfs|overlay|squashfs\"}) < 0.20)",
         "instant": true,
         "intervalMs": 1000,
         "legendFormat": "__auto",

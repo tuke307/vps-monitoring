@@ -142,8 +142,11 @@ Instead, Promtail derives two stable labels from the **image** name:
 | `ghcr.io/tuke307/marienmuehle-api`      | `marienmuehle`| `api`          |
 | `ghcr.io/tuke307/marienmuehle-mcp-server` | `marienmuehle`| `mcp-server` |
 | `ghcr.io/tuke307/tonyluke-web`          | `tonyluke`    | `web`          |
+| `ghcr.io/tuke307/luki-fitti-api`        | `luki-fitti`  | `api`          |
+| `ghcr.io/tuke307/luki-fitti-web`        | `luki-fitti`  | `web`          |
+| `ghcr.io/tuke307/luki-fitti-email-worker` | `luki-fitti`| `email-worker` |
 
-All dashboards query by these labels, so kds, marienmuehle, and tonyluke never cross-contaminate.
+All dashboards query by these labels, so kds, marienmuehle, tonyluke, and luki-fitti never cross-contaminate.
 
 ### Dashboards
 
@@ -152,6 +155,7 @@ All dashboards query by these labels, so kds, marienmuehle, and tonyluke never c
 | `dashboards/kds-logs.json`        | KDS API / Web / Email-worker / MCP server |
 | `dashboards/marienmuehle-logs.json`| Marienmuehle API / Web / Email-worker / MCP server |
 | `dashboards/tonyluke-logs.json`    | Tony Luke Portfolio (web)              |
+| `dashboards/luki-fitti-logs.json`  | LukiFitti API / Web / Email-worker     |
 | `dashboards/application-overview.json`        | All projects, with `$project`/`$service` filters |
 | `dashboards/container-metrics.json`| cAdvisor container metrics             |
 | `dashboards/vps-overview.json`     | Host metrics (node-exporter): CPU/RAM/disk/network |

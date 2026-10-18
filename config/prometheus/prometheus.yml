@@ -37,12 +37,13 @@ scrape_configs:
       #   ghcr.io/tuke307/marienmuehle-web -> project=marienmuehle, service=web
       #   ghcr.io/tuke307/kds-mcp-server   -> project=kds,          service=mcp-server
       #   ghcr.io/tuke307/tonyluke-web     -> project=tonyluke,     service=web
+      #   ghcr.io/tuke307/luki-fitti-api   -> project=luki-fitti,   service=api
       - source_labels: [image]
-        regex: '^(?:.*\/)?(kds|marienmuehle|tonyluke)-(?:api|web|email-worker|mcp-server|db-migrate)([@:].*)?$'
+        regex: '^(?:.*\/)?(kds|marienmuehle|tonyluke|luki-fitti)-(?:api|web|email-worker|mcp-server|db-migrate)([@:].*)?$'
         target_label: project
         replacement: '${1}'
       - source_labels: [image]
-        regex: '^(?:.*\/)?(?:kds|marienmuehle|tonyluke)-(api|web|email-worker|mcp-server|db-migrate)([@:].*)?$'
+        regex: '^(?:.*\/)?(?:kds|marienmuehle|tonyluke|luki-fitti)-(api|web|email-worker|mcp-server|db-migrate)([@:].*)?$'
         target_label: service
         replacement: '${1}'
 

@@ -12,7 +12,7 @@
       }
     ]
   },
-  "description": "Unified log overview across all applications (kds + marienmuehle). Filter by project and service using the variables at the top.",
+  "description": "Unified log overview across all applications (kds + marienmuehle + tonyluke + luki-fitti). Filter by project and service using the variables at the top.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -58,7 +58,7 @@
         {
           "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
           "editorMode": "code",
-          "expr": "sum by (project) (rate({project=~\"kds|marienmuehle|tonyluke\"}[1m]))",
+          "expr": "sum by (project) (rate({project=~\"kds|marienmuehle|tonyluke|luki-fitti\"}[1m]))",
           "legendFormat": "{{project}}",
           "queryType": "range",
           "refId": "A"
@@ -109,7 +109,7 @@
         {
           "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
           "editorMode": "code",
-          "expr": "sum by (project) (rate({project=~\"kds|marienmuehle|tonyluke\"} |~ \"(?i)(error|exception|fail|fatal)\" [1m]))",
+          "expr": "sum by (project) (rate({project=~\"kds|marienmuehle|tonyluke|luki-fitti\"} |~ \"(?i)(error|exception|fail|fatal)\" [1m]))",
           "legendFormat": "{{project}} errors",
           "queryType": "range",
           "refId": "A"
@@ -204,13 +204,13 @@
         "label": "Project",
         "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
         "query": {
-          "query": "label_values({project=~\"kds|marienmuehle|tonyluke\"}, project)",
+          "query": "label_values({project=~\"kds|marienmuehle|tonyluke|luki-fitti\"}, project)",
           "refId": "LokiVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
         "multi": true,
         "includeAll": true,
-        "allValue": "kds|marienmuehle|tonyluke",
+        "allValue": "kds|marienmuehle|tonyluke|luki-fitti",
         "current": { "selected": true, "text": "All", "value": "$__all" },
         "regex": "",
         "sort": 1

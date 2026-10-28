@@ -1,0 +1,1925 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Product KPIs for LukiFitti: signups, onboarding funnel, activation, retention cohorts and engagement, queried read-only from the app's PostgreSQL database. 'Active' means at least one completed workout. Panels return aggregates only, no PII.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "type": "row",
+      "title": "Overview",
+      "collapsed": false,
+      "id": 1,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Total users",
+      "description": "All registered accounts, independent of the time range.",
+      "id": 2,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS \"Users\" FROM \"User\"",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "New signups",
+      "description": "Accounts created within the selected time range.",
+      "id": 3,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS \"Signups\" FROM \"User\" WHERE $__timeFilter(\"createdAt\")",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Email verified",
+      "description": "Share of signups in the time range that confirmed their email.",
+      "id": 4,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 25
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT round(100.0 * count(*) FILTER (WHERE \"emailVerified\") / NULLIF(count(*), 0), 1) AS \"Verified\" FROM \"User\" WHERE $__timeFilter(\"createdAt\")",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Activation rate (7d)",
+      "description": "Signups in range that completed a workout within 7 days of registering. Only signups at least 7 days old are counted, so recent ones don't drag it down.",
+      "id": 5,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 25
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT round(100.0 * count(*) FILTER (WHERE EXISTS (SELECT 1 FROM \"WorkoutSession\" s WHERE s.\"userId\" = u.id AND s.status = 'COMPLETED' AND s.\"completedAt\" >= u.\"createdAt\" AND s.\"completedAt\" < u.\"createdAt\" + interval '7 days')) / NULLIF(count(*), 0), 1) AS \"Activated\" FROM \"User\" u WHERE $__timeFilter(u.\"createdAt\") AND u.\"createdAt\" <= timezone('utc', now()) - interval '7 days'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Weekly active users",
+      "description": "Distinct users with at least one completed workout in the last 7 days.",
+      "id": 6,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(DISTINCT \"userId\") AS \"WAU\" FROM \"WorkoutSession\" WHERE status = 'COMPLETED' AND \"completedAt\" >= timezone('utc', now()) - interval '7 days'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Monthly active users",
+      "description": "Distinct users with at least one completed workout in the last 30 days.",
+      "id": 7,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(DISTINCT \"userId\") AS \"MAU\" FROM \"WorkoutSession\" WHERE status = 'COMPLETED' AND \"completedAt\" >= timezone('utc', now()) - interval '30 days'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Stickiness (DAU / MAU)",
+      "description": "Average daily active users over the last 30 days divided by MAU. For a fitness app ~3 workouts/week corresponds to ~40%.",
+      "id": 8,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "green",
+                "value": 20
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH d AS ( SELECT date_trunc('day', \"completedAt\") AS day, count(DISTINCT \"userId\") AS n FROM \"WorkoutSession\" WHERE status = 'COMPLETED' AND \"completedAt\" >= timezone('utc', now()) - interval '30 days' GROUP BY 1) SELECT round(100.0 * (SELECT coalesce(sum(n), 0) FROM d) / 30.0 / NULLIF((SELECT count(DISTINCT \"userId\") FROM \"WorkoutSession\" WHERE status = 'COMPLETED' AND \"completedAt\" >= timezone('utc', now()) - interval '30 days'), 0), 1) AS \"Stickiness\"",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Median time to 1st workout",
+      "description": "Median time from registration to the first completed workout, for signups in range that have completed one.",
+      "id": 9,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT percentile_cont(0.5) WITHIN GROUP ( ORDER BY extract(epoch FROM f.first_done - u.\"createdAt\")) AS \"Median\" FROM \"User\" u JOIN LATERAL (SELECT min(s.\"completedAt\") AS first_done FROM \"WorkoutSession\" s WHERE s.\"userId\" = u.id AND s.status = 'COMPLETED' AND s.\"completedAt\" >= u.\"createdAt\") f ON f.first_done IS NOT NULL WHERE $__timeFilter(u.\"createdAt\")",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Stuck unverified (> 48h)",
+      "description": "Signups in range that still haven't verified their email after 48 hours. A spike usually means confirmation emails are not arriving.",
+      "id": 10,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS \"Users\" FROM \"User\" WHERE NOT \"emailVerified\" AND \"createdAt\" < timezone('utc', now()) - interval '48 hours' AND $__timeFilter(\"createdAt\")",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Confirmation emails failed",
+      "description": "Account confirmation emails that permanently failed within the time range.",
+      "id": 11,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS \"Failed\" FROM \"Email\" e JOIN \"EmailTemplate\" t ON t.id = e.\"emailTemplateId\" WHERE t.type = 'ACCOUNT_CONFIRMATION' AND e.status = 'FAILED' AND $__timeFilter(e.\"createdAt\")",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Workouts completed",
+      "description": "Completed workout sessions within the time range.",
+      "id": 12,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS \"Workouts\" FROM \"WorkoutSession\" WHERE status = 'COMPLETED' AND $__timeFilter(\"completedAt\")",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "At-risk users (14d idle)",
+      "description": "Users who trained at some point in the last 90 days but not in the last 14 days. Good target for a win-back nudge.",
+      "id": 13,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS \"Users\" FROM ( SELECT \"userId\", max(\"completedAt\") AS last_done FROM \"WorkoutSession\" WHERE status = 'COMPLETED' GROUP BY 1) t WHERE last_done < timezone('utc', now()) - interval '14 days' AND last_done >= timezone('utc', now()) - interval '90 days'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Onboarding funnel (signups in selected range)",
+      "collapsed": false,
+      "id": 14,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "panels": []
+    },
+    {
+      "type": "bargauge",
+      "title": "Funnel: users per step",
+      "description": "How many of the users who signed up in the selected range reached each onboarding step. Workouts only count if they happened after signup.",
+      "id": 15,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "continuous-BlPu"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "left",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "maxVizHeight": 300
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH u AS ( SELECT id, \"createdAt\", \"emailVerified\" FROM \"User\" WHERE $__timeFilter(\"createdAt\")), s AS ( SELECT s.\"userId\", count(*) AS started, count(*) FILTER (WHERE s.status = 'COMPLETED') AS done, count(DISTINCT date_trunc('day', s.\"completedAt\")) FILTER (WHERE s.status = 'COMPLETED') AS days FROM \"WorkoutSession\" s JOIN u ON u.id = s.\"userId\" WHERE s.\"startedAt\" >= u.\"createdAt\" GROUP BY 1) SELECT count(*) FILTER (WHERE true) AS \"1. Signed up\", count(*) FILTER (WHERE u.\"emailVerified\") AS \"2. Verified email\", count(*) FILTER (WHERE s.started >= 1) AS \"3. Started a workout\", count(*) FILTER (WHERE s.done >= 1) AS \"4. Completed 1st workout\", count(*) FILTER (WHERE s.days >= 2) AS \"5. Came back another day\", count(*) FILTER (WHERE s.done >= 3) AS \"6. Completed 3+ workouts\" FROM u LEFT JOIN s ON s.\"userId\" = u.id",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Funnel: conversion from signup",
+      "description": "Same funnel expressed as % of signups. The biggest drop between two neighbouring bars is the onboarding step to work on first.",
+      "id": 16,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "left",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "maxVizHeight": 300
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH u AS ( SELECT id, \"createdAt\", \"emailVerified\" FROM \"User\" WHERE $__timeFilter(\"createdAt\")), s AS ( SELECT s.\"userId\", count(*) AS started, count(*) FILTER (WHERE s.status = 'COMPLETED') AS done, count(DISTINCT date_trunc('day', s.\"completedAt\")) FILTER (WHERE s.status = 'COMPLETED') AS days FROM \"WorkoutSession\" s JOIN u ON u.id = s.\"userId\" WHERE s.\"startedAt\" >= u.\"createdAt\" GROUP BY 1) SELECT round(100.0 * count(*) FILTER (WHERE true) / NULLIF(count(*), 0), 1) AS \"1. Signed up\", round(100.0 * count(*) FILTER (WHERE u.\"emailVerified\") / NULLIF(count(*), 0), 1) AS \"2. Verified email\", round(100.0 * count(*) FILTER (WHERE s.started >= 1) / NULLIF(count(*), 0), 1) AS \"3. Started a workout\", round(100.0 * count(*) FILTER (WHERE s.done >= 1) / NULLIF(count(*), 0), 1) AS \"4. Completed 1st workout\", round(100.0 * count(*) FILTER (WHERE s.days >= 2) / NULLIF(count(*), 0), 1) AS \"5. Came back another day\", round(100.0 * count(*) FILTER (WHERE s.done >= 3) / NULLIF(count(*), 0), 1) AS \"6. Completed 3+ workouts\" FROM u LEFT JOIN s ON s.\"userId\" = u.id",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Time from signup to 1st workout",
+      "description": "Distribution of how long activated users took to complete their first workout.",
+      "id": 17,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "opacity",
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "showValue": "always",
+        "barWidth": 0.7,
+        "groupWidth": 0.7,
+        "xTickLabelRotation": 0,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH f AS ( SELECT extract(epoch FROM min(s.\"completedAt\") - u.\"createdAt\") / 3600 AS h FROM \"User\" u JOIN \"WorkoutSession\" s ON s.\"userId\" = u.id AND s.status = 'COMPLETED' AND s.\"completedAt\" >= u.\"createdAt\" WHERE $__timeFilter(u.\"createdAt\") GROUP BY u.id), b AS (SELECT CASE WHEN h < 1 THEN 0 WHEN h < 24 THEN 1 WHEN h < 72 THEN 2 WHEN h < 168 THEN 3 WHEN h < 672 THEN 4 ELSE 5 END AS ord FROM f) SELECT (ARRAY['< 1 hour', '1-24 hours', '1-3 days', '3-7 days', '1-4 weeks', '> 4 weeks'])[ord + 1] AS \"Time to first workout\", count(*) AS \"Users\" FROM b GROUP BY ord ORDER BY ord",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Signups vs. activated within 7 days",
+      "description": "Per signup bucket: how many accounts were created and how many of them completed a workout within their first 7 days. The last 7 days are still maturing.",
+      "id": 18,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 80,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(u.\"createdAt\", $bucket, 0), count(*) AS \"Signups\", count(*) FILTER (WHERE EXISTS (SELECT 1 FROM \"WorkoutSession\" s WHERE s.\"userId\" = u.id AND s.status = 'COMPLETED' AND s.\"completedAt\" >= u.\"createdAt\" AND s.\"completedAt\" < u.\"createdAt\" + interval '7 days')) AS \"Activated within 7 days\" FROM \"User\" u WHERE $__timeFilter(u.\"createdAt\") GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Growth",
+      "collapsed": false,
+      "id": 19,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Total users",
+      "description": "Cumulative registered accounts.",
+      "id": 20,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisSoftMin": null,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, (SELECT count(*) FROM \"User\" WHERE \"createdAt\" < $__timeFrom()) + sum(n) OVER (ORDER BY time) AS \"Total users\" FROM (SELECT $__timeGroup(\"createdAt\", $bucket) AS time, count(*) AS n FROM \"User\" WHERE $__timeFilter(\"createdAt\") GROUP BY 1) t ORDER BY 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Active users",
+      "description": "Distinct users with a completed workout per bucket (DAU at 1d, WAU at 1w).",
+      "id": 21,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(\"completedAt\", $bucket, 0), count(DISTINCT \"userId\") AS \"Active users\" FROM \"WorkoutSession\" WHERE status = 'COMPLETED' AND $__timeFilter(\"completedAt\") GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Retention",
+      "collapsed": false,
+      "id": 22,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Weekly signup cohorts: % who completed a workout in week N",
+      "description": "Each row is a signup week. 'Week N' = share of that cohort who completed at least one workout N weeks after registering (week 0 = first 7 days). Cells stay empty until the whole cohort has had time to reach that week.",
+      "id": 23,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 37
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Ever trained|Week 0|Week 1|Week 2|Week 4|Week 8)$"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "noValue",
+                "value": "-"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-RdYlGr"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH cohort AS ( SELECT id, \"createdAt\", date_trunc('week', \"createdAt\") AS week FROM \"User\" WHERE $__timeFilter(\"createdAt\")), act AS ( SELECT DISTINCT c.id, floor(extract(epoch FROM s.\"completedAt\" - c.\"createdAt\") / 604800)::int AS wk FROM cohort c JOIN \"WorkoutSession\" s ON s.\"userId\" = c.id AND s.status = 'COMPLETED' AND s.\"completedAt\" >= c.\"createdAt\") SELECT to_char(c.week, 'IYYY-\"W\"IW') AS \"Cohort\", count(DISTINCT c.id) AS \"Signups\", round(100.0 * count(DISTINCT a.id) / count(DISTINCT c.id), 1) AS \"Ever trained\", CASE WHEN c.week + interval '14 days' <= timezone('utc', now()) THEN round(100.0 * count(DISTINCT a.id) FILTER (WHERE a.wk = 0) / count(DISTINCT c.id), 1) END AS \"Week 0\" , CASE WHEN c.week + interval '21 days' <= timezone('utc', now()) THEN round(100.0 * count(DISTINCT a.id) FILTER (WHERE a.wk = 1) / count(DISTINCT c.id), 1) END AS \"Week 1\" , CASE WHEN c.week + interval '28 days' <= timezone('utc', now()) THEN round(100.0 * count(DISTINCT a.id) FILTER (WHERE a.wk = 2) / count(DISTINCT c.id), 1) END AS \"Week 2\" , CASE WHEN c.week + interval '42 days' <= timezone('utc', now()) THEN round(100.0 * count(DISTINCT a.id) FILTER (WHERE a.wk = 4) / count(DISTINCT c.id), 1) END AS \"Week 4\" , CASE WHEN c.week + interval '70 days' <= timezone('utc', now()) THEN round(100.0 * count(DISTINCT a.id) FILTER (WHERE a.wk = 8) / count(DISTINCT c.id), 1) END AS \"Week 8\" FROM cohort c LEFT JOIN act a ON a.id = c.id GROUP BY c.week ORDER BY c.week DESC",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Engagement",
+      "collapsed": false,
+      "id": 24,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 47
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Completed workouts by device",
+      "description": "",
+      "id": 25,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 48
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 80,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(\"completedAt\", $bucket, 0), count(*) FILTER (WHERE \"sourceDevice\" = 'IPHONE') AS \"iPhone\", count(*) FILTER (WHERE \"sourceDevice\" = 'APPLE_WATCH') AS \"Apple Watch\", count(*) FILTER (WHERE \"sourceDevice\" = 'WEB') AS \"Web\" FROM \"WorkoutSession\" WHERE status = 'COMPLETED' AND $__timeFilter(\"completedAt\") GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Workout completion rate",
+      "description": "Completed / (completed + abandoned) sessions by start time. Drops point to friction during a workout.",
+      "id": 26,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 48
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(\"startedAt\", $bucket), round(100.0 * count(*) FILTER (WHERE status = 'COMPLETED') / NULLIF(count(*) FILTER (WHERE status IN ('COMPLETED', 'ABANDONED')), 0), 1) AS \"Completion rate\" FROM \"WorkoutSession\" WHERE $__timeFilter(\"startedAt\") GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Workouts by device",
+      "description": "",
+      "id": 27,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 56
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) FILTER (WHERE \"sourceDevice\" = 'IPHONE') AS \"iPhone\", count(*) FILTER (WHERE \"sourceDevice\" = 'APPLE_WATCH') AS \"Apple Watch\", count(*) FILTER (WHERE \"sourceDevice\" = 'WEB') AS \"Web\" FROM \"WorkoutSession\" WHERE status = 'COMPLETED' AND $__timeFilter(\"completedAt\")",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Workouts by type",
+      "description": "",
+      "id": 28,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 56
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) FILTER (WHERE \"sessionType\" = 'STRENGTH') AS \"Strength\", count(*) FILTER (WHERE \"sessionType\" = 'STRETCHING') AS \"Stretching\", count(*) FILTER (WHERE \"sessionType\" = 'MIXED') AS \"Mixed\" FROM \"WorkoutSession\" WHERE status = 'COMPLETED' AND $__timeFilter(\"completedAt\")",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Feature adoption (monthly active users)",
+      "description": "Share of the last 30 days' active users who have ever used each feature. Starter templates seeded at signup don't count as 'own'.",
+      "id": 29,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 56
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "color": {
+            "mode": "continuous-BlPu"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "left",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "maxVizHeight": 300
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH mau AS ( SELECT DISTINCT \"userId\" AS id FROM \"WorkoutSession\" WHERE status = 'COMPLETED' AND \"completedAt\" >= timezone('utc', now()) - interval '30 days'), f AS ( SELECT EXISTS (SELECT 1 FROM \"WorkoutSession\" s WHERE s.\"userId\" = m.id AND s.\"sourceDevice\" = 'APPLE_WATCH') AS watch, EXISTS (SELECT 1 FROM \"WorkoutSession\" s WHERE s.\"userId\" = m.id AND s.\"healthKitWorkoutUuid\" IS NOT NULL) AS health, EXISTS (SELECT 1 FROM \"WorkoutSession\" s WHERE s.\"userId\" = m.id AND s.\"sessionType\" = 'STRETCHING') AS stretch, EXISTS (SELECT 1 FROM \"WorkoutTemplate\" t WHERE t.\"userId\" = m.id AND t.\"systemKey\" IS NULL) AS own_tpl, EXISTS (SELECT 1 FROM \"Exercise\" e WHERE e.\"userId\" = m.id) AS custom_ex, EXISTS (SELECT 1 FROM \"UserPreferences\" p WHERE p.\"userId\" = m.id AND p.\"updatedAt\" > p.\"createdAt\" + interval '1 minute') AS prefs FROM mau m) SELECT round(100 * avg(own_tpl::int), 1) AS \"Own / edited template\", round(100 * avg(prefs::int), 1) AS \"Changed settings\", round(100 * avg(health::int), 1) AS \"Apple Health sync\", round(100 * avg(watch::int), 1) AS \"Apple Watch\", round(100 * avg(stretch::int), 1) AS \"Stretching\", round(100 * avg(custom_ex::int), 1) AS \"Custom exercise\" FROM f",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Lifetime completed workouts per user",
+      "description": "All users bucketed by how many workouts they have completed.",
+      "id": 30,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 0,
+        "y": 64
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "opacity",
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "showValue": "always",
+        "barWidth": 0.7,
+        "groupWidth": 0.7,
+        "xTickLabelRotation": 0,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH n AS ( SELECT u.id, count(s.id) AS n FROM \"User\" u LEFT JOIN \"WorkoutSession\" s ON s.\"userId\" = u.id AND s.status = 'COMPLETED' GROUP BY u.id), b AS (SELECT CASE WHEN n = 0 THEN 0 WHEN n = 1 THEN 1 WHEN n < 5 THEN 2 WHEN n < 10 THEN 3 WHEN n < 25 THEN 4 ELSE 5 END AS ord FROM n) SELECT (ARRAY['0', '1', '2-4', '5-9', '10-24', '25+'])[ord + 1] AS \"Completed workouts\", count(*) AS \"Users\" FROM b GROUP BY ord ORDER BY ord",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Hit weekly goal (last full week)",
+      "description": "Of users who trained last ISO week (Mon-Sun), the share that reached their personal weekly session goal.",
+      "id": 31,
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${DS_LUKI_FITTI}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 64
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 25
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "${DS_LUKI_FITTI}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH wk AS ( SELECT date_trunc('week', timezone('utc', now())) - interval '7 days' AS start), c AS ( SELECT s.\"userId\", count(*) AS n FROM \"WorkoutSession\" s, wk WHERE s.status = 'COMPLETED' AND s.\"completedAt\" >= wk.start AND s.\"completedAt\" < wk.start + interval '7 days' GROUP BY 1) SELECT round(100.0 * count(*) FILTER (WHERE c.n >= coalesce(p.\"weeklyGoalSessions\", 4)) / NULLIF(count(*), 0), 1) AS \"Hit goal\" FROM c LEFT JOIN \"UserPreferences\" p ON p.\"userId\" = c.\"userId\"",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "15m",
+  "schemaVersion": 39,
+  "tags": [
+    "luki-fitti",
+    "kpi",
+    "product",
+    "onboarding"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "bucket",
+        "label": "Bucket",
+        "type": "custom",
+        "query": "1d,1w",
+        "current": {
+          "selected": true,
+          "text": "1d",
+          "value": "1d"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "1d",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "1w",
+            "value": "1w"
+          }
+        ],
+        "hide": 0,
+        "multi": false,
+        "includeAll": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "LukiFitti KPIs",
+  "uid": "luki-fitti-kpis",
+  "version": 1,
+  "weekStart": "monday",
+  "__inputs": [
+    {
+      "name": "DS_LUKI_FITTI",
+      "label": "LukiFitti PostgreSQL (read-only)",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "grafana-postgresql-datasource",
+      "pluginName": "PostgreSQL"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "12.1.0"
+    },
+    {
+      "type": "datasource",
+      "id": "grafana-postgresql-datasource",
+      "name": "PostgreSQL",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "bargauge",
+      "name": "Bar gauge",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "barchart",
+      "name": "Bar chart",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "piechart",
+      "name": "Pie chart",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ]
+}

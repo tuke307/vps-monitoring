@@ -73,11 +73,16 @@ def load_datasources(grafana):
     ]
 
 
+def normalize(value):
+    """Lowercase and collapse non-alphanumerics to `_`, so `luki-fitti` == LUKI_FITTI."""
+    return re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
+
+
 def resolve_placeholder(name, datasources):
     """Resolve a placeholder suffix (e.g. LOKI) to a datasource uid, or None."""
-    needle = name.lower()
+    needle = normalize(name)
     for ds in datasources:
-        if ds["name"].lower() == needle or ds["type"].lower() == needle:
+        if normalize(ds["name"]) == needle or normalize(ds["type"]) == needle:
             return ds["uid"]
     return None
 

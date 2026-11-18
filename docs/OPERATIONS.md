@@ -69,8 +69,16 @@ Services reach each other by **Docker service name**, never `localhost`:
 - Grafana → Loki: `http://loki:3100`
 - Grafana → Prometheus: `http://prometheus:9090`
 - Alloy/Prometheus → Loki: `http://loki:3100`
+- Prometheus → cAdvisor: `http://cadvisor:9109`
+- Prometheus → node-exporter: `http://node-exporter:9100`
 
 (`localhost` inside a container refers to that container itself, so it fails.)
+
+### Host port access
+The published ports (Prometheus 9090, Loki 3100, cAdvisor 9109, Alloy 12345) are bound to
+`127.0.0.1` in `docker-compose.yml`. These endpoints have **no authentication**, so they must
+never be exposed publicly — they are reachable from the host itself (for debugging) and by
+service name on the Docker network (for Grafana and each other), nothing else.
 
 ## Image tag conventions
 
@@ -78,14 +86,78 @@ Different projects use different tag formats — guessing causes `manifest unkno
 
 | Image | Tag format | Example |
 |-------|------------|---------|
-| Grafana (loki, alloy, grafana-oss) | **no `v`** | `grafana/loki:3.7.2`, `grafana/alloy:v1.17.0`* |
-| Prometheus | **with `v`** | `prom/prometheus:v3.10.0` |
-| cAdvisor | **no `v`, on ghcr** | `ghcr.io/google/cadvisor:0.56.1` |
+| Grafana (loki, alloy, grafana-oss) | **no `v`** | `grafana/loki:3.7.9`, `grafana/alloy:v1.21.3`* |
+| Prometheus | **with `v`** | `prom/prometheus:v3.16.0` |
+| cAdvisor | **no `v`, on ghcr** | `ghcr.io/google/cadvisor:0.60.6` |
 
-\* Alloy tags *do* use a `v` prefix (`grafana/alloy:v1.17.0`) — the exception among Grafana images.
+\* Alloy tags *do* use a `v` prefix (`grafana/alloy:v1.21.3`) — the exception among Grafana images.
 
 Always verify a tag exists (GitHub Releases / Docker Hub) before pinning. **Promtail is
 deprecated** by Grafana; Alloy is its replacement (used here).
+
+## Per-application logging
+
+Alloy tails **every** running container on the host via the Docker socket, so all apps are
+collected automatically — no per-app allowlist is needed, and network isolation between the
+app networks does not matter.
+
+### `project` and `service` labels
+
+Because Coolify names containers the same way across projects (`api-<uuid>-<n>`,
+`web-<uuid>-<n>`, …), selecting logs by `container_name` mixes projects together. Instead,
+each app's `compose.yml` sets `app.project` / `app.service` Docker labels (see above), which
+Alloy turns into Loki stream labels:
+
+| App | Services (`service` label) |
+|---|---|
+| `kds` | `api`, `web`, `email-worker`, `mcp-server` |
+| `marienmuehle` | `api`, `mcp-server` |
+| `tonyluke` | `web` |
+| `luki-fitti` | `api`, `web`, `email-worker`, `mcp-server` |
+
+For metrics, `config/prometheus/prometheus.yml` derives the same `project`/`service` labels
+from the cAdvisor `image` label (e.g. `ghcr.io/tuke307/luki-fitti-api` → `project=luki-fitti`,
+`service=api`), so both signals line up. All dashboards query by these labels, so the
+projects never cross-contaminate.
+
+### Example LogQL queries
+
+```logql
+# All logs from a specific container
+{container_name="my-app"}
+
+# Logs containing "error"
+{container_name="my-app"} |= "error"
+
+# All luki-fitti logs
+{project="luki-fitti"}
+
+# luki-fitti API errors only
+{project="luki-fitti", service="api"} |= "error"
+
+# Everything across all projects (JSON logs)
+{project=~"kds|marienmuehle|tonyluke|luki-fitti"} | json
+
+# Rate of error logs
+rate({container_name="my-app"} |= "error" [5m])
+```
+
+> Note: `db-migrate` containers run once and exit (`restart: 'no'`) and Alloy only tails
+> `running` containers, so their logs are not captured. That is expected.
+
+## Configuration reference
+
+| Service | Config file | Container port |
+|---|---|---|
+| Prometheus | `config/prometheus/prometheus.yml` (+ `rules/*.yml`) | 9090 |
+| Loki | `config/loki/loki.yml` (retention: 31 days) | 3100 |
+| Alloy | `config/alloy/config.alloy` (River syntax) | 12345 |
+| cAdvisor | flags in `docker-compose.yml` | 9109 |
+| node-exporter | flags in `docker-compose.yml` | 9100 (not published) |
+
+Alloy scrapes Docker container logs via the Docker socket, derives `project`/`service` from
+the `app.*` container labels (see above), and reads Coolify labels as well. See
+[`config/README.md`](../config/README.md) for per-file details and validation commands.
 
 ## Loki 3.x notes
 
@@ -124,6 +196,25 @@ These errors look alarming but are expected and safe to ignore:
    ```
 4. Optionally add a Loki dashboard under `dashboards/` and import it in Grafana
    (map the `DS_LOKI` variable to your Loki datasource).
+
+## Troubleshooting
+
+All published ports are bound to `127.0.0.1`, so run these on the host itself.
+
+```bash
+# Check Loki is receiving logs
+curl -G -s "http://localhost:3100/loki/api/v1/label" | jq
+
+# Check Loki readiness
+curl -s http://localhost:3100/ready
+
+# Prometheus targets / health
+curl -s http://localhost:9090/-/healthy
+curl -s http://localhost:9090/api/v1/targets | jq
+
+# Alloy metrics + UI (component graph at http://localhost:12345)
+curl -s http://localhost:12345/metrics
+```
 
 ## Known follow-ups
 

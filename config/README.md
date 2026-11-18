@@ -11,7 +11,9 @@ config/
 │   └── rules/           # Recording and alerting rules
 ├── loki/                # Loki log aggregation
 │   └── loki.yml        # Loki configuration
-└── promtail/            # Promtail log collection
+├── alloy/               # Alloy log collection (replaces Promtail)
+│   └── config.alloy    # Alloy configuration (River syntax)
+└── promtail/            # Legacy Promtail config — unused, kept for reference
     └── promtail.yml     # Promtail configuration (reusable for all hosts)
 ```
 
@@ -23,7 +25,7 @@ Scrapes metrics from:
 - Prometheus itself (9090)
 - Grafana (3000)
 - cAdvisor (9109)
-- Node Exporter (9208, 9209)
+- Node Exporter (9100)
 - PostgreSQL Exporter (9187)
 - Loki (3100)
 - Promtail (9080)
@@ -47,9 +49,16 @@ Log storage and querying.
 - Adjust rate limits in `limits_config`
 - Modify compaction settings in `compactor` section
 
+### Alloy (`alloy/config.alloy`)
+
+Collects logs from all Docker containers via the Docker socket and ships them to Loki.
+Derives `project`/`service` stream labels from the `app.project`/`app.service` Docker
+labels on each container.
+
 ### Promtail (`promtail/promtail.yml`)
 
-Collects logs and sends to Loki. Same config works for all hosts.
+**Unused** — Promtail is deprecated and was replaced by Alloy. The config is kept for
+reference only. Same config works for all hosts.
 
 **What it scrapes:**
 - All Docker containers (via Docker socket)
@@ -119,12 +128,12 @@ docker run --rm -v $(pwd)/config/prometheus:/config prom/prometheus:latest \
   promtool check config /config/prometheus.yml
 
 # Validate Loki config
-docker run --rm -v $(pwd)/config/loki:/config grafana/loki:2.9.3 \
+docker run --rm -v $(pwd)/config/loki:/config grafana/loki:3.7.9 \
   -config.file=/config/loki.yml -verify-config
 
-# Validate Promtail config
-docker run --rm -v $(pwd)/config/promtail:/config grafana/promtail:2.9.3 \
-  -config.file=/config/promtail.yml -dry-run
+# Validate Alloy config
+docker run --rm -v $(pwd)/config/alloy:/config grafana/alloy:v1.21.3 \
+  validate /config/config.alloy
 ```
 
 ## Reload Configs Without Restart
@@ -136,6 +145,6 @@ curl -X POST http://localhost:9090/-/reload
 # Loki (restart required)
 docker-compose restart loki
 
-# Promtail (restart required)
-docker-compose restart promtail
+# Alloy (restart required)
+docker-compose restart alloy
 ```

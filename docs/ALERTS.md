@@ -86,6 +86,9 @@ Tuning notes:
 - **Disk fills within 24h**: linearly extrapolates the last six hours of available bytes and
   aggregates filesystem label variants per host, so duplicate root-mount series do not create
   duplicate notifications. It fires before you actually run out. Drop the rule if it's too noisy.
+  The `< 20%` guard makes the query return no series whenever the disk is healthy, so this rule
+  uses `noDataState: OK`; otherwise Grafana raises a NoData alert that re-notifies on every
+  repeat interval. A missing node_exporter is caught by **Host down** instead.
 
 To change a rule, edit the file in `alerts/rules/` and push — the workflow syncs it. The
 `${DS_PROMETHEUS}` placeholder is resolved to your Prometheus datasource UID at sync time, so the

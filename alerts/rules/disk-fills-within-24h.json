@@ -69,7 +69,7 @@
       }
     }
   ],
-  "noDataState": "NoData",
+  "noDataState": "OK",
   "execErrState": "Error",
   "for": "30m",
   "keep_firing_for": "0s",

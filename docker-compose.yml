@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     container_name: prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - prometheus-data:/prometheus
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
@@ -22,10 +22,10 @@ services:
 
   # cAdvisor - Container metrics
   cadvisor:
-    image: ghcr.io/google/cadvisor:0.56.1
+    image: ghcr.io/google/cadvisor:0.60.6
     container_name: cadvisor
     ports:
-      - "9109:9109"
+      - "127.0.0.1:9109:9109"
     volumes:
       - /:/rootfs:ro
       # whole /var/run (not just docker.sock) so cAdvisor can reach the Docker
@@ -59,7 +59,7 @@ services:
   # monitoring network. `localhost` from the Prometheus container cannot reach
   # the host, so the scrape target must be the service name (see prometheus.yml).
   node-exporter:
-    image: quay.io/prometheus/node-exporter:v1.9.1
+    image: quay.io/prometheus/node-exporter:v1.12.1
     container_name: node-exporter
     volumes:
       - /proc:/host/proc:ro
@@ -83,10 +83,12 @@ services:
 
   # Loki - Log aggregation system
   loki:
-    image: grafana/loki:3.7.2
+    build:
+      context: ./config/loki
+      dockerfile: Dockerfile
     container_name: loki
     ports:
-      - "3100:3100"
+      - "127.0.0.1:3100:3100"
     volumes:
       - ./config/loki/loki.yml:/etc/loki/local-config.yaml
       - loki-data:/loki
@@ -99,13 +101,14 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 60s
 
   # Alloy - Log collection (replaces the deprecated Promtail)
   alloy:
-    image: grafana/alloy:v1.17.0
+    image: grafana/alloy:v1.21.3
     container_name: alloy
     ports:
-      - "12345:12345"
+      - "127.0.0.1:12345:12345"
     volumes:
       - ./config/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
